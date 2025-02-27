@@ -354,6 +354,7 @@ if selected == "Jahrgang Season":
         ax[0].legend()
         ax[0].grid(True)
         ax[0].set_xticks(df_results_top3['Season'])  # Add tick for every year
+        ax[0].xticks(rotation=45)
 
     with col2:
         # Top 10 Plot
@@ -366,6 +367,7 @@ if selected == "Jahrgang Season":
         ax[1].legend()
         ax[1].grid(True)
         ax[1].set_xticks(df_results_top10['Season'])  # Add tick for every year
+        ax[1].xticks(rotation=45)
 
     with col3:
         # Top 15 Plot
@@ -378,6 +380,7 @@ if selected == "Jahrgang Season":
         ax[2].legend()
         ax[2].grid(True)
         ax[2].set_xticks(df_results_top15['Season'])  # Add tick for every year
+        ax[2].xticks(rotation=45)
 
     st.pyplot(fig)
 
