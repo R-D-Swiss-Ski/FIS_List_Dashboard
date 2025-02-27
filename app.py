@@ -336,9 +336,9 @@ if selected == "Jahrgang Season":
     #st.subheader('Top 15 Results')
     #st.write(df_results_top15)
 
-    df_results_top3['Season'] = df_results_top3['Season'].astype(str) + "BY" + df_results_top3['birthyear'].astype(str)
-    df_results_top10['Season'] = df_results_top10['Season'].astype(str) + "BY" + df_results_top10['birthyear'].astype(str)
-    df_results_top15['Season'] = df_results_top15['Season'].astype(str) + "BY" + df_results_top15['birthyear'].astype(str)
+    df_results_top3['Season'] = "S"+ df_results_top3['Season'].astype(str) + " BY" + df_results_top3['birthyear'].astype(str)
+    df_results_top10['Season'] = "S"+ df_results_top10['Season'].astype(str) + " BY" + df_results_top10['birthyear'].astype(str)
+    df_results_top15['Season'] = "S" +df_results_top15['Season'].astype(str) + " BY" + df_results_top15['birthyear'].astype(str)
 
     # Plotting
     fig, ax = plt.subplots(1, 3, figsize=(24, 6), dpi=300)  # Set dpi to 300 for higher resolution
@@ -367,6 +367,7 @@ if selected == "Jahrgang Season":
         ax[1].legend()
         ax[1].grid(True)
         ax[1].set_xticks(df_results_top10['Season'])  # Add tick for every year
+        ax[1].set_xticklabels(df_results_top10['Season'], rotation=45)
 
     with col3:
         # Top 15 Plot
@@ -379,6 +380,7 @@ if selected == "Jahrgang Season":
         ax[2].legend()
         ax[2].grid(True)
         ax[2].set_xticks(df_results_top15['Season'])  # Add tick for every year
+        ax[2].set_xticklabels(df_results_top15['Season'], rotation=45)
   
 
     st.pyplot(fig)
