@@ -426,8 +426,9 @@ if selected == "Jahrgang Season No":
     combined_df['Listyear'] = combined_df['Listname'].str[-4:]
     combined_df['Listyear'] = combined_df['Listyear'].replace("4/25", "2025")
 
-
+   
     df_results_top = collect_data_No(birthyear, FISYear, Gender, disciplin, combined_df)
+
 
     col1, col2 = st.columns(2)
 
@@ -435,20 +436,24 @@ if selected == "Jahrgang Season No":
         st.dataframe(df_results_top.style.format(precision=0))
 
     with col2:
+       
+        df_results_top['Season'] = df_results_top['Season'].astype(str).str[2:]
+        df_results_top['Season'] = df_results_top['Season'].apply(lambda x: f"{int(x)-1}/{int(x)}" if x.isdigit() else x)
+        df_results_top['Season'] = "S" + df_results_top['Season'].astype(str) + " BY" + df_results_top['birthyear'].astype(str)
 
         # Create bar plot
         fig, ax = plt.subplots(figsize=(10, 6))
         bar_width = 0.25
-        index = df_results_top['Season']
+        index = range(len(df_results_top['Season']))
         bar1 = ax.bar(index, df_results_top['Top30'], bar_width, label='Top 30', color='#F5921B')
-        bar2 = ax.bar(index + bar_width, df_results_top['Top50'], bar_width, label='Top 50', color='#87BB62' )
-        bar3 = ax.bar(index + 2 * bar_width, df_results_top['Top70'], bar_width, label='Top 70', color='#876FD4')
+        bar2 = ax.bar([i + bar_width for i in index], df_results_top['Top50'], bar_width, label='Top 50', color='#87BB62')
+        bar3 = ax.bar([i + 2 * bar_width for i in index], df_results_top['Top70'], bar_width, label='Top 70', color='#876FD4')
 
-        ax.set_xlabel('Season')
+        ax.set_xlabel('Season and Birth Year')
         ax.set_ylabel('Count')
         ax.set_title('Number of SUI Athletes in Top 30, 50, and 70')
-        ax.set_xticks(index + bar_width)
-        ax.set_xticklabels(df_results_top['Season'])
+        ax.set_xticks([i + bar_width for i in index])
+        ax.set_xticklabels(df_results_top['Season'], rotation=45)
         ax.legend()
         ax.grid(False)
 
