@@ -16,6 +16,8 @@ st.set_page_config(
 
 ### PAGE CONTENT ###
 
+st.title("FIS List Dashboard")
+
 selected = option_menu(
             None, [ "Top 3", "Top 20", "Jahrgang Season", "Jahrgang Season No"],
             icons=["trophy-fill", "trophy", "trophy", "trophy"],
