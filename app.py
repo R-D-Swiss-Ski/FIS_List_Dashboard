@@ -336,6 +336,10 @@ if selected == "Jahrgang Season":
     #st.subheader('Top 15 Results')
     #st.write(df_results_top15)
 
+    df_results_top3['Season'] = df_results_top3['Season'].astype(str) + "BY" + df_results_top3['birthyear'].astype(str)
+    df_results_top10['Season'] = df_results_top10['Season'].astype(str) + "BY" + df_results_top10['birthyear'].astype(str)
+    df_results_top15['Season'] = df_results_top15['Season'].astype(str) + "BY" + df_results_top15['birthyear'].astype(str)
+
     # Plotting
     fig, ax = plt.subplots(1, 3, figsize=(24, 6), dpi=300)  # Set dpi to 300 for higher resolution
     col1, col2, col3 = st.columns(3)
