@@ -336,9 +336,17 @@ if selected == "Jahrgang Season":
     #st.subheader('Top 15 Results')
     #st.write(df_results_top15)
 
-    df_results_top3['Season'] = "S"+ df_results_top3['Season'].astype(str) + " BY" + df_results_top3['birthyear'].astype(str)
-    df_results_top10['Season'] = "S"+ df_results_top10['Season'].astype(str) + " BY" + df_results_top10['birthyear'].astype(str)
-    df_results_top15['Season'] = "S" +df_results_top15['Season'].astype(str) + " BY" + df_results_top15['birthyear'].astype(str)
+    def format_season_column(df, birthyear_col='birthyear'):
+        df['Season'] = df['Season'].astype(str).str[2:]
+        df['Season'] = df['Season'].astype(int).apply(lambda x: f"{x-1}/{x}")
+        df['Season'] = "S" + df['Season'].astype(str) + " BY" + df[birthyear_col].astype(str)
+        return df
+
+
+    df_results_top3 = format_season_column(df_results_top3)
+    df_results_top10 = format_season_column(df_results_top10)
+    df_results_top15 = format_season_column(df_results_top15)
+
 
     # Plotting
     fig, ax = plt.subplots(1, 3, figsize=(24, 6), dpi=300)  # Set dpi to 300 for higher resolution
@@ -427,7 +435,7 @@ if selected == "Jahrgang Season No":
         st.dataframe(df_results_top.style.format(precision=0))
 
     with col2:
-    
+
         # Create bar plot
         fig, ax = plt.subplots(figsize=(10, 6))
         bar_width = 0.25
