@@ -58,3 +58,22 @@ def collect_data_No(birthyear, FISYear, Gender, disciplin, combined_df):
         })
         birthyear += 1
     return pd.DataFrame(data)
+
+def collect_data_Entw(birthyear, FISYear, Gender, top, disciplin, combined_df):
+    data = []
+    season = birthyear + 16 + FISYear
+    for i in range(11):
+        
+        df_season = combined_df[(combined_df['Birthyear'] == birthyear) & 
+                                (combined_df['Listyear'] == str(season)) & 
+                                (combined_df['Gender'] == Gender)]
+        MeanInt = getMeanTopX_Int(df_season, disciplin, top)
+        MeanSUI = getMeanTopX_SUI(df_season, disciplin, top)
+        data.append({
+            'birthyear': birthyear,
+            'Season': season,
+            'MeanInt': MeanInt,
+            'MeanSUI': MeanSUI
+        })
+        season += 1
+    return pd.DataFrame(data)

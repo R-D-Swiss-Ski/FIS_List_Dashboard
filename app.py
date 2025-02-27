@@ -4,7 +4,7 @@ import os
 import pickle
 import matplotlib.pyplot as plt
 from streamlit_option_menu import option_menu
-from utils import getMeanTopX_Int, getMeanTopX_SUI, collect_data, collect_data_No
+from utils import getMeanTopX_Int, getMeanTopX_SUI, collect_data, collect_data_No, collect_data_Entw
 
 
 ### PAGE CONFIGURATION ###
@@ -19,8 +19,8 @@ st.set_page_config(
 st.title("FIS List Dashboard")
 
 selected = option_menu(
-            None, [ "Top 3", "Top 20", "Jahrgang Season", "Jahrgang Season No"],
-            icons=["trophy-fill", "trophy", "trophy", "trophy"],
+            None, [ "Top 3", "Top 20", "Jahrgang Season", "Jahrgang Season No", "Jahrgang Season Entw." ],
+            icons=["trophy-fill", "trophy","archive", "archive-fill","rocket"],
             orientation= "horizontal",
             styles={
                 "container": {"padding": "0!important"},
@@ -459,3 +459,80 @@ if selected == "Jahrgang Season No":
 
         st.pyplot(fig)
 
+#------------------------------------------------------------Jahrgang Season Entw------------------------------------------------------------
+
+if selected == "Jahrgang Season Entw.":
+
+    st.title("FIS Points List - Dashboard")
+
+    # User inputs
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+        birthyear = st.number_input("Enter birth year:", value=1998, min_value=1994, max_value=2011)
+    
+    with col2:
+        Gender = st.selectbox("Select Gender:", options=['M', 'W'])
+    
+    with col3:
+        disciplin = st.selectbox("Select Discipline:", options=['DH', 'SL', 'GS', 'SG', 'AC'])
+
+    with col4:
+        top = st.number_input("Select Top X:", value=10, min_value=3, max_value=50)
+
+    FISYear = 1
+    # Load the data
+    pickle_file_path = 'fis_list_combined_export.pkl'
+    if os.path.exists(pickle_file_path):
+        with open(pickle_file_path, 'rb') as f:
+            combined_df = pickle.load(f)
+    else:
+        st.error(f"Pickle file not found at {pickle_file_path}")
+
+    #st.write(combined_df)
+    combined_df['Listname'] = combined_df['Listname'].astype(str)
+    combined_df['Listyear'] = combined_df['Listname'].str[-4:]
+    combined_df['Listyear'] = combined_df['Listyear'].replace("4/25", "2025")
+
+    # Collect data for top 3, 10, and 15
+    df_results_top = collect_data_Entw(birthyear, FISYear, Gender, top, disciplin, combined_df)
+
+    # Display results
+    #st.subheader('Top 3 Results')
+    #st.write(df_results_top3)
+
+    #st.subheader('Top 10 Results')
+    #st.write(df_results_top10)
+
+    #st.subheader('Top 15 Results')
+    #st.write(df_results_top15)
+
+    def format_season_column(df, birthyear_col='birthyear'):
+        df['Season'] = df['Season'].astype(str).str[2:]
+        df['Season'] = df['Season'].astype(int).apply(lambda x: f"{x-1}/{x}")
+        df['Season'] = "S" + df['Season'].astype(str) + " BY" + df[birthyear_col].astype(str)
+        return df
+
+
+    df_results_top = format_season_column(df_results_top)
+  
+
+    # Plotting
+    fig, ax = plt.subplots(1, 3, figsize=(24, 6), dpi=300)  # Set dpi to 300 for higher resolution
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        # Top 3 Plot
+        ax[0].plot(df_results_top['Season'], df_results_top['MeanInt'], label='Int', marker='o', color= '#0328fc')
+        ax[0].plot(df_results_top['Season'], df_results_top['MeanSUI'], label='SUI', marker='o', color= '#4a0a13')
+        ax[0].set_title('Top ' + str( top) + str(disciplin))
+        ax[0].invert_yaxis()
+        ax[0].set_xlabel('Season')
+        ax[0].set_ylabel('Weltranglistenposition')
+        ax[0].legend()
+        ax[0].grid(True)
+        ax[0].set_xticks(df_results_top['Season'])  # Add tick for every year
+        ax[0].set_xticklabels(df_results_top['Season'], rotation=45)
+
+
+
+    st.pyplot(fig)
