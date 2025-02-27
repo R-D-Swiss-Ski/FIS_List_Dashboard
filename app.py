@@ -93,6 +93,7 @@ def create_table(data, discipline, n=3, style=False):
 #------------------------------------------------------------TOP 3------------------------------------------------------------
 if selected == "Top 3":
 
+    st.title("FIS List 17th of 2025 (408 - 23-02-2025)")
     # Load the data (Change to read from pickle for easier solution)
     data = get_latest_fis_list()
 
