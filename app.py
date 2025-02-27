@@ -354,7 +354,7 @@ if selected == "Jahrgang Season":
         ax[0].legend()
         ax[0].grid(True)
         ax[0].set_xticks(df_results_top3['Season'])  # Add tick for every year
-        ax[0].set_xticklabels(ax[0].get_xticks(), rotation=45)
+        ax[0].set_xticklabels(df_results_top3['Season'], rotation=45)
 
     with col2:
         # Top 10 Plot
