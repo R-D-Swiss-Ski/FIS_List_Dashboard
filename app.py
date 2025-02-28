@@ -45,16 +45,17 @@ def highlight_suiss(val):
     return ''
 
 
-def formated_dataframe(df):
-
+def formated_dataframe(df,n):
+    height = 750 if n == 20 else None
     df_formated = st.dataframe(
-                    df,
-                    hide_index=True,
-                    use_container_width=True,
-                    column_config={
-                        "Name": {"width": 150}
-                    }
-                )
+        df,
+        hide_index=True,
+        use_container_width=True,
+        height=height,
+        column_config={
+            "Name": st.column_config.Column(width=150)
+        }
+    )
 
     return df_formated
 
@@ -84,10 +85,10 @@ def create_table(data, discipline, n=3, style=False):
                     })
                 )
         
-        return formated_dataframe(styled_df)
+        return formated_dataframe(styled_df,n)
 
     # Display the table in Streamlit
-    return formated_dataframe(df_topX_display)
+    return formated_dataframe(df_topX_display,n)
 
 
 
@@ -144,19 +145,19 @@ if selected == "Top 3":
     SUI_data = filtered_data[filtered_data["nationcode"] == "SUI"]
 
     with col3_1:
-        st.subheader("Slalom SUI")
+        st.markdown("<h3 style='color:blue;'>Slalom SUI</h3>", unsafe_allow_html=True)
         create_table(SUI_data, "sl")
 
     with col3_2:
-        st.subheader("Giant Slalom SUI")
+        st.markdown("<h3 style='color:blue;'>Giant Slalom SUI</h3>", unsafe_allow_html=True)
         create_table(SUI_data, "gs")
 
     with col3_3:
-        st.subheader("Super G SUI")
+        st.markdown("<h3 style='color:blue;'>Super G SUI</h3>", unsafe_allow_html=True)
         create_table(SUI_data, "sg")
 
     with col3_4:
-        st.subheader("Downhill SUI")
+        st.markdown("<h3 style='color:blue;'>Downhill SUI</h3>", unsafe_allow_html=True)
         create_table(SUI_data, "dh")
 
 
@@ -203,19 +204,19 @@ if selected == "Top 3":
     SUI_data2 = filtered_data2[filtered_data2["nationcode"] == "SUI"]
 
     with col6_1:
-        st.subheader("Slalom SUI")
+        st.markdown("<h3 style='color:blue;'>Slalom SUI</h3>", unsafe_allow_html=True)
         create_table(SUI_data2, "sl")
 
     with col6_2:
-        st.subheader("Giant Slalom SUI")
+        st.markdown("<h3 style='color:blue;'>Giant Slalom SUI</h3>", unsafe_allow_html=True)
         create_table(SUI_data2, "gs")
 
     with col6_3:
-        st.subheader("Super G SUI")
+        st.markdown("<h3 style='color:blue;'>Super G SUI</h3>", unsafe_allow_html=True)
         create_table(SUI_data2, "sg")
 
     with col6_4:
-        st.subheader("Downhill SUI")
+        st.markdown("<h3 style='color:blue;'>Downhill SUI</h3>", unsafe_allow_html=True)
         create_table(SUI_data2, "dh")
 
 
@@ -264,22 +265,20 @@ if selected == "Top 20":
         st.subheader("Downhill")
         create_table(filtered_data, "dh", 20, True)
 
-    
-    st.subheader("SUI Athletes only")
 
     col2_1, col2_2, col2_3, col2_4 = st.columns([1,1,1,1])
     SUI_data = filtered_data[filtered_data["nationcode"] == "SUI"]
 
     with col2_1:
-        st.subheader("Slalom")
+        st.subheader("Slalom SUI")
         create_table(SUI_data, "sl", 5)
 
     with col2_2:
-        st.subheader("Giant Slalom")
+        st.subheader("Giant Slalom SUI")
         create_table(SUI_data, "gs", 5)
 
     with col2_3:
-        st.subheader("Super G")
+        st.subheader("Super G SUI")
         create_table(SUI_data, "sg", 5)
 
     with col2_4:
@@ -326,27 +325,15 @@ if selected == "Jahrgang Season":
     df_results_top10 = collect_data(birthyear, FISYear, Gender, 10, disciplin, combined_df)
     df_results_top15 = collect_data(birthyear, FISYear, Gender, 15, disciplin, combined_df)
 
-    # Display results
-    #st.subheader('Top 3 Results')
-    #st.write(df_results_top3)
-
-    #st.subheader('Top 10 Results')
-    #st.write(df_results_top10)
-
-    #st.subheader('Top 15 Results')
-    #st.write(df_results_top15)
-
     def format_season_column(df, birthyear_col='birthyear'):
         df['Season'] = df['Season'].astype(str).str[2:]
         df['Season'] = df['Season'].astype(int).apply(lambda x: f"{x-1}/{x}")
         df['Season'] = "S" + df['Season'].astype(str) + " BY" + df[birthyear_col].astype(str)
         return df
 
-
     df_results_top3 = format_season_column(df_results_top3)
     df_results_top10 = format_season_column(df_results_top10)
     df_results_top15 = format_season_column(df_results_top15)
-
 
     # Plotting
     fig, ax = plt.subplots(1, 3, figsize=(24, 6), dpi=300)  # Set dpi to 300 for higher resolution
@@ -364,6 +351,12 @@ if selected == "Jahrgang Season":
         ax[0].set_xticks(df_results_top3['Season'])  # Add tick for every year
         ax[0].set_xticklabels(df_results_top3['Season'], rotation=45)
 
+        # Add value labels
+        for i, txt in enumerate(df_results_top3['MeanInt']):
+            ax[0].annotate(f'{txt:.2f}', (df_results_top3['Season'][i], df_results_top3['MeanInt'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#0328fc')
+        for i, txt in enumerate(df_results_top3['MeanSUI']):
+            ax[0].annotate(f'{txt:.2f}', (df_results_top3['Season'][i], df_results_top3['MeanSUI'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#4a0a13')
+
     with col2:
         # Top 10 Plot
         ax[1].plot(df_results_top10['Season'], df_results_top10['MeanInt'], label='Int', marker='o', color= '#0328fc')
@@ -377,6 +370,12 @@ if selected == "Jahrgang Season":
         ax[1].set_xticks(df_results_top10['Season'])  # Add tick for every year
         ax[1].set_xticklabels(df_results_top10['Season'], rotation=45)
 
+         # Add value labels
+        for i, txt in enumerate(df_results_top10['MeanInt']):
+            ax[0].annotate(f'{txt:.2f}', (df_results_top10['Season'][i], df_results_top10['MeanInt'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#0328fc')
+        for i, txt in enumerate(df_results_top10['MeanSUI']):
+            ax[0].annotate(f'{txt:.2f}', (df_results_top10['Season'][i], df_results_top310['MeanSUI'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#4a0a13')
+
     with col3:
         # Top 15 Plot
         ax[2].plot(df_results_top15['Season'], df_results_top15['MeanInt'], label='Int', marker='o', color= '#0328fc')
@@ -389,7 +388,13 @@ if selected == "Jahrgang Season":
         ax[2].grid(True)
         ax[2].set_xticks(df_results_top15['Season'])  # Add tick for every year
         ax[2].set_xticklabels(df_results_top15['Season'], rotation=45)
-  
+     
+        # Add value labels
+        for i, txt in enumerate(df_results_top15['MeanInt']):
+            ax[0].annotate(f'{txt:.2f}', (df_results_top15['Season'][i], df_results_top15['MeanInt'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#0328fc')
+        for i, txt in enumerate(df_results_top15['MeanSUI']):
+            ax[0].annotate(f'{txt:.2f}', (df_results_top15['Season'][i], df_results_top15['MeanSUI'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#4a0a13')
+
 
     st.pyplot(fig)
 
@@ -466,18 +471,15 @@ if selected == "Jahrgang Season Entw.":
     st.title("FIS Points List - Dashboard")
 
     # User inputs
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3 = st.columns(3)
 
     with col1:
         birthyear = st.number_input("Enter birth year:", value=1998, min_value=1994, max_value=2011)
     
     with col2:
         Gender = st.selectbox("Select Gender:", options=['M', 'W'])
-    
-    with col3:
-        disciplin = st.selectbox("Select Discipline:", options=['DH', 'SL', 'GS', 'SG', 'AC'])
 
-    with col4:
+    with col3:
         top = st.number_input("Select Top X:", value=10, min_value=3, max_value=50)
 
     FISYear = 1
@@ -495,44 +497,39 @@ if selected == "Jahrgang Season Entw.":
     combined_df['Listyear'] = combined_df['Listyear'].replace("4/25", "2025")
 
     # Collect data for top 3, 10, and 15
-    df_results_top = collect_data_Entw(birthyear, FISYear, Gender, top, disciplin, combined_df)
-
-    # Display results
-    #st.subheader('Top 3 Results')
-    #st.write(df_results_top3)
-
-    #st.subheader('Top 10 Results')
-    #st.write(df_results_top10)
-
-    #st.subheader('Top 15 Results')
-    #st.write(df_results_top15)
+    #'SL', 'GS', 'SG'])
+    
 
     def format_season_column(df, birthyear_col='birthyear'):
         df['Season'] = df['Season'].astype(str).str[2:]
         df['Season'] = df['Season'].astype(int).apply(lambda x: f"{x-1}/{x}")
         df['Season'] = "S" + df['Season'].astype(str) + " BY" + df[birthyear_col].astype(str)
         return df
-
-
-    df_results_top = format_season_column(df_results_top)
-  
-
+    
     # Plotting
-    fig, ax = plt.subplots(1, 3, figsize=(24, 6), dpi=300)  # Set dpi to 300 for higher resolution
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        # Top 3 Plot
-        ax[0].plot(df_results_top['Season'], df_results_top['MeanInt'], label='Int', marker='o', color= '#0328fc')
-        ax[0].plot(df_results_top['Season'], df_results_top['MeanSUI'], label='SUI', marker='o', color= '#4a0a13')
-        ax[0].set_title('Top ' + str( top) + str(disciplin))
-        ax[0].invert_yaxis()
-        ax[0].set_xlabel('Season')
-        ax[0].set_ylabel('Weltranglistenposition')
-        ax[0].legend()
-        ax[0].grid(True)
-        ax[0].set_xticks(df_results_top['Season'])  # Add tick for every year
-        ax[0].set_xticklabels(df_results_top['Season'], rotation=45)
-
-
-
+    fig, ax = plt.subplots(2, 2, figsize=(24, 12), dpi=300)  # Set dpi to 300 for higher resolution
+    fig.subplots_adjust(hspace=0.4)  # Add space between rows
+    col1, col2 = st.columns(2)
+    col3, col4 = st.columns(2)
+    
+    disciplines = ['DH', 'SG', 'SL', 'GS']
+    
+    for i, disciplin in enumerate(disciplines):
+        df_results_top = collect_data_Entw(birthyear, FISYear, Gender, top, disciplin, combined_df)
+        df_results_top = format_season_column(df_results_top)
+        
+        row = i // 2
+        col = i % 2
+        
+        ax[row, col].plot(df_results_top['Season'], df_results_top['MeanInt'], label='Int', marker='o', color= '#0328fc')
+        ax[row, col].plot(df_results_top['Season'], df_results_top['MeanSUI'], label='SUI', marker='o', color= '#4a0a13')
+        ax[row, col].set_title('Top ' + str(top) + ' ' + str(disciplin))
+        ax[row, col].invert_yaxis()
+        ax[row, col].set_xlabel('Season')
+        ax[row, col].set_ylabel('Weltranglistenposition')
+        ax[row, col].legend()
+        ax[row, col].grid(True)
+        ax[row, col].set_xticks(df_results_top['Season'])  # Add tick for every year
+        ax[row, col].set_xticklabels(df_results_top['Season'], rotation=45)
+    
     st.pyplot(fig)
