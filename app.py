@@ -16,7 +16,7 @@ st.set_page_config(
 
 ### PAGE CONTENT ###
 
-st.title("FIS List Dashboard")
+st.title("FIS Points List Dashboard")
 
 selected = option_menu(
             None, [ "Top 3", "Top 20", "Jahrgang Season", "Jahrgang Season No", "Jahrgang Season Entw." ],
@@ -290,8 +290,6 @@ if selected == "Top 20":
 #------------------------------------------------------------Jahrgang Season------------------------------------------------------------
 if selected == "Jahrgang Season":
 
-    st.title("FIS Points List - Dashboard")
-
     # User inputs
     col1, col2, col3, col4 = st.columns(4)
 
@@ -401,8 +399,6 @@ if selected == "Jahrgang Season":
 #------------------------------------------------------------Jahrgang Season No------------------------------------------------------------
 if selected == "Jahrgang Season No":
 
-    st.title("FIS Points List - Dashboard")
-
   # User inputs
     col1, col2, col3, col4 = st.columns(4)
 
@@ -482,7 +478,6 @@ if selected == "Jahrgang Season No":
 
 if selected == "Jahrgang Season Entw.":
 
-    st.title("FIS Points List - Dashboard")
 
     # User inputs
     col1, col2, col3 = st.columns(3)
