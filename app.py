@@ -372,9 +372,9 @@ if selected == "Jahrgang Season":
 
          # Add value labels
         for i, txt in enumerate(df_results_top10['MeanInt']):
-            ax[0].annotate(f'{txt:.2f}', (df_results_top10['Season'][i], df_results_top10['MeanInt'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#0328fc')
+            ax[1].annotate(f'{txt:.2f}', (df_results_top10['Season'][i], df_results_top10['MeanInt'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#0328fc')
         for i, txt in enumerate(df_results_top10['MeanSUI']):
-            ax[0].annotate(f'{txt:.2f}', (df_results_top10['Season'][i], df_results_top310['MeanSUI'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#4a0a13')
+            ax[1].annotate(f'{txt:.2f}', (df_results_top10['Season'][i], df_results_top10['MeanSUI'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#4a0a13')
 
     with col3:
         # Top 15 Plot
@@ -391,9 +391,9 @@ if selected == "Jahrgang Season":
      
         # Add value labels
         for i, txt in enumerate(df_results_top15['MeanInt']):
-            ax[0].annotate(f'{txt:.2f}', (df_results_top15['Season'][i], df_results_top15['MeanInt'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#0328fc')
+            ax[2].annotate(f'{txt:.2f}', (df_results_top15['Season'][i], df_results_top15['MeanInt'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#0328fc')
         for i, txt in enumerate(df_results_top15['MeanSUI']):
-            ax[0].annotate(f'{txt:.2f}', (df_results_top15['Season'][i], df_results_top15['MeanSUI'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#4a0a13')
+            ax[2].annotate(f'{txt:.2f}', (df_results_top15['Season'][i], df_results_top15['MeanSUI'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#4a0a13')
 
 
     st.pyplot(fig)
@@ -461,6 +461,20 @@ if selected == "Jahrgang Season No":
         ax.set_xticklabels(df_results_top['Season'], rotation=45)
         ax.legend()
         ax.grid(False)
+
+        # Add value labels on bars
+        for bar in bar1:
+            height = bar.get_height()
+            ax.annotate(f'{height:.0f}', xy=(bar.get_x() + bar.get_width() / 2, height),
+                xytext=(0, 3), textcoords="offset points", ha='center', va='bottom', color='#F5921B')
+        for bar in bar2:
+            height = bar.get_height()
+            ax.annotate(f'{height:.0f}', xy=(bar.get_x() + bar.get_width() / 2, height),
+                xytext=(0, 3), textcoords="offset points", ha='center', va='bottom', color='#87BB62')
+        for bar in bar3:
+            height = bar.get_height()
+            ax.annotate(f'{height:.0f}', xy=(bar.get_x() + bar.get_width() / 2, height),
+                xytext=(0, 3), textcoords="offset points", ha='center', va='bottom', color='#876FD4')
 
         st.pyplot(fig)
 
@@ -531,5 +545,11 @@ if selected == "Jahrgang Season Entw.":
         ax[row, col].grid(True)
         ax[row, col].set_xticks(df_results_top['Season'])  # Add tick for every year
         ax[row, col].set_xticklabels(df_results_top['Season'], rotation=45)
+
+        # Add value labels
+        for i, txt in enumerate(df_results_top['MeanInt']):
+            ax[row, col].annotate(f'{txt:.2f}', (df_results_top['Season'][i], df_results_top['MeanInt'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#0328fc')
+        for i, txt in enumerate(df_results_top['MeanSUI']):
+            ax[row, col].annotate(f'{txt:.2f}', (df_results_top['Season'][i], df_results_top['MeanSUI'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#4a0a13')
     
     st.pyplot(fig)
