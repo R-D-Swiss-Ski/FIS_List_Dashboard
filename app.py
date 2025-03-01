@@ -306,7 +306,7 @@ if selected == "Jahrgang Season":
         disciplin = st.selectbox("Select Discipline:", options=['DH', 'SL', 'GS', 'SG', 'AC'])
 
     # Load the data
-    pickle_file_path = 'fis_list_combined_export.pkl'
+    pickle_file_path = 'data/fis_list_combined_export_new.pkl'
     if os.path.exists(pickle_file_path):
         with open(pickle_file_path, 'rb') as f:
             combined_df = pickle.load(f)
@@ -415,7 +415,7 @@ if selected == "Jahrgang Season No":
         disciplin = st.selectbox("Select Discipline:", options=['DH', 'SL', 'GS', 'SG', 'AC'])
 
     # Load the data
-    pickle_file_path = 'fis_list_combined_export.pkl'
+    pickle_file_path = 'data/fis_list_combined_export_new.pkl'
     if os.path.exists(pickle_file_path):
         with open(pickle_file_path, 'rb') as f:
             combined_df = pickle.load(f)
@@ -493,7 +493,7 @@ if selected == "Jahrgang Season Entw.":
 
     FISYear = 1
     # Load the data
-    pickle_file_path = 'fis_list_combined_export.pkl'
+    pickle_file_path = 'data/fis_list_combined_export_new.pkl'
     if os.path.exists(pickle_file_path):
         with open(pickle_file_path, 'rb') as f:
             combined_df = pickle.load(f)
