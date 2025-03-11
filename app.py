@@ -1,5 +1,7 @@
 import streamlit as st
 import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
 import os
 import pickle
 import matplotlib.pyplot as plt
@@ -551,7 +553,7 @@ if selected == "Jahrgang Season Entw.":
 #------------------------------------------------------------Jahrgang Season Names------------------------------------------------------------
 
 if selected == "Jahrgang Season Names":
-
+    st.markdown("<h3 style='color:blue;'>International</h3><h3 style='color:#4a0a13; display:inline;'> vs Swiss</h3>", unsafe_allow_html=True)
 
     # User inputs
     col1, col2, col3 = st.columns(3)
@@ -563,7 +565,7 @@ if selected == "Jahrgang Season Names":
         Gender = st.selectbox("Select Gender:", options=['M', 'W'])
 
     with col3:
-        top = st.number_input("Select Top X:", value=10, min_value=3, max_value=50)
+        top = st.number_input("Select Top X:", value=3, min_value=3, max_value=20)
 
     FISYear = 1
     # Load the data
@@ -579,9 +581,6 @@ if selected == "Jahrgang Season Names":
     combined_df['Listyear'] = combined_df['Listname'].str[-4:]
     combined_df['Listyear'] = combined_df['Listyear'].replace("4/25", "2025")
 
-    # Collect data for top 3, 10, and 15
-    #'SL', 'GS', 'SG'])
-    
 
     def format_season_column(df, birthyear_col='birthyear'):
         df['Season'] = df['Season'].astype(str).str[2:]
@@ -592,38 +591,86 @@ if selected == "Jahrgang Season Names":
     # Plotting
     fig, ax = plt.subplots(2, 2, figsize=(24, 12), dpi=300)  # Set dpi to 300 for higher resolution
     fig.subplots_adjust(hspace=0.4)  # Add space between rows
-    col1, col2 = st.columns(2)
-    col3, col4 = st.columns(2)
     
     disciplines = ['DH', 'SG', 'SL', 'GS']
     
     for i, disciplin in enumerate(disciplines):
         df_results_top = collect_data_Entw_Names(birthyear, FISYear, Gender, top, disciplin, combined_df)
 
-        #df_results_top = format_season_column(df_results_top)
-        
-        st.write(df_results_top )
+        # Ensure 'Season' is treated as a categorical variable for correct plotting
+        df_results_top['Season'] = pd.Categorical(df_results_top['Season'], ordered=True)
 
-    st.write(df_results_top)
+        # Group and calculate mean positions for non-SUI and SUI athletes
+        mean_pos_int = df_results_top[df_results_top['Nationcode'] != "SUI"].groupby('Season')[str(disciplin) + 'pos'].mean()
+        mean_pos_sui = df_results_top[df_results_top['Nationcode'] == "SUI"].groupby('Season')[str(disciplin) + 'pos'].mean()
 
-'''       row = i // 2
-        col = i % 2
-        
-        ax[row, col].plot(df_results_top['Season'], df_results_top['MeanInt'], label='Int', marker='o', color= '#0328fc')
-        ax[row, col].plot(df_results_top['Season'], df_results_top['MeanSUI'], label='SUI', marker='o', color= '#4a0a13')
-        ax[row, col].set_title('Top ' + str(top) + ' ' + str(disciplin))
-        ax[row, col].invert_yaxis()
-        ax[row, col].set_xlabel('Season')
-        ax[row, col].set_ylabel('Weltranglistenposition')
-        ax[row, col].legend()
-        ax[row, col].grid(True)
-        ax[row, col].set_xticks(df_results_top['Season'])  # Add tick for every year
-        ax[row, col].set_xticklabels(df_results_top['Season'], rotation=45)
+        # Calculate the range for non-SUI and SUI athletes
+        range_pos_int = df_results_top[df_results_top['Nationcode'] != "SUI"].groupby('Season')[str(disciplin) + 'pos'].agg(['min', 'max'])
+        range_pos_sui = df_results_top[df_results_top['Nationcode'] == "SUI"].groupby('Season')[str(disciplin) + 'pos'].agg(['min', 'max'])
 
-        # Add value labels
-        for i, txt in enumerate(df_results_top['MeanInt']):
-            ax[row, col].annotate(f'{txt:.2f}', (df_results_top['Season'][i], df_results_top['MeanInt'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#0328fc')
-        for i, txt in enumerate(df_results_top['MeanSUI']):
-            ax[row, col].annotate(f'{txt:.2f}', (df_results_top['Season'][i], df_results_top['MeanSUI'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#4a0a13')
-        st.pyplot(fig)
-'''
+        # Create the plot
+        fig = go.Figure()
+
+        # Add traces for mean positions
+        fig.add_trace(go.Scatter(x=mean_pos_int.index, y=mean_pos_int, mode='lines+markers', name='meanINT', marker=dict(color='#0328fc')))
+        fig.add_trace(go.Scatter(x=mean_pos_sui.index, y=mean_pos_sui, mode='lines+markers', name='meanSUI', marker=dict(color='#4a0a13')))
+
+        # Add traces for range (shaded area)
+        fig.add_trace(go.Scatter(x=range_pos_int.index, y=range_pos_int['min'], mode='lines', line=dict(width=0), showlegend=False))
+        fig.add_trace(go.Scatter(x=range_pos_int.index, y=range_pos_int['max'], mode='lines', fill='tonexty', name='INT Range', fillcolor='rgba(3, 40, 252, 0.2)', line=dict(width=0)))
+
+        fig.add_trace(go.Scatter(x=range_pos_sui.index, y=range_pos_sui['min'], mode='lines', line=dict(width=0), showlegend=False))
+        fig.add_trace(go.Scatter(x=range_pos_sui.index, y=range_pos_sui['max'], mode='lines', fill='tonexty', name='SUI Range', fillcolor='rgba(74, 10, 19, 0.2)', line=dict(width=0)))
+
+        # Add hover text with athlete names
+        added_names = set()
+        for season in df_results_top['Season'].unique():
+            season_data = df_results_top[df_results_top['Season'] == season]
+            for _, row in season_data.iterrows():
+                athlete_name = f"{row['Firstname']} {row['Lastname']}"
+                fig.add_trace(go.Scatter(
+                    x=[season],
+                    y=[row[str(disciplin) + 'pos']],
+                    mode='markers',
+                    marker=dict(size=10, color='#0328fc' if row['Nationcode'] != 'SUI' else '#4a0a13'),
+                    text=athlete_name,
+                    hoverinfo='text',
+                    showlegend=False  # Hide legend for individual athletes
+                ))
+
+        # Generate a list of unique athlete names
+        unique_athletes = df_results_top[['Firstname', 'Lastname']].drop_duplicates()
+        athlete_names = unique_athletes.apply(lambda row: f"{row['Firstname']} {row['Lastname']}", axis=1).tolist()
+
+        # Add a selectbox for selecting an athlete
+        selected_athlete = st.selectbox("Select Athlete", ["None"] + athlete_names)
+
+        # Highlight the selected athlete in the plot
+        if selected_athlete != "None":
+            selected_firstname, selected_lastname = selected_athlete.rsplit(' ', 1)
+            selected_data = df_results_top[(df_results_top['Firstname'] == selected_firstname) & (df_results_top['Lastname'] == selected_lastname)]
+            for _, row in selected_data.iterrows():
+                fig.add_trace(go.Scatter(
+                    x=[row['Season']],
+                    y=[row[str(disciplin) + 'pos']],
+                    mode='markers',
+                    marker=dict(size=12, color='red'),
+                    text=f"{row['Firstname']} {row['Lastname']}",
+                    hoverinfo='text',
+                    showlegend=False  # Hide legend for individual athletes
+                ))
+
+        # Update layout again to include the highlighted athlete
+        fig.update_layout(
+            title=f'Top {top} {disciplin}',
+            xaxis_title='Season',
+            yaxis_title='Weltranglistenposition',
+            yaxis=dict(autorange='reversed'),
+            legend_title='Legend',
+            hovermode='closest'
+        )
+
+        # Display the updated plot in Streamlit
+        st.plotly_chart(fig, key=f"highlighted_plot_{disciplin}")
+
+
