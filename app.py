@@ -622,32 +622,34 @@ if selected == "Jahrgang Season Names":
         fig.add_trace(go.Scatter(x=range_pos_sui.index, y=range_pos_sui['min'], mode='lines', line=dict(width=0), showlegend=False))
         fig.add_trace(go.Scatter(x=range_pos_sui.index, y=range_pos_sui['max'], mode='lines', fill='tonexty', name='SUI Range', fillcolor='rgba(74, 10, 19, 0.2)', line=dict(width=0)))
 
-        # Add hover text with athlete names
+        # Add hover text with athlete names and positions
         added_names = set()
         for season in df_results_top['Season'].unique():
             season_data = df_results_top[df_results_top['Season'] == season]
             for _, row in season_data.iterrows():
                 athlete_name = f"{row['Firstname']} {row['Lastname']}"
+                position = row[str(disciplin) + 'pos']
                 fig.add_trace(go.Scatter(
                     x=[season],
-                    y=[row[str(disciplin) + 'pos']],
+                    y=[position],
                     mode='markers',
                     marker=dict(size=10, color='#0328fc' if row['Nationcode'] != 'SUI' else '#4a0a13'),
-                    text=athlete_name,
+                    text=f"{athlete_name}: {position}",
                     hoverinfo='text',
                     showlegend=False  # Hide legend for individual athletes
                 ))
 
-        # Generate a list of unique athlete names
-        unique_athletes = df_results_top[['Firstname', 'Lastname']].drop_duplicates()
+        # Generate a list of unique Swiss athlete names
+        unique_athletes = df_results_top[df_results_top['Nationcode'] == "SUI"][['Firstname', 'Lastname']].drop_duplicates()
         athlete_names = unique_athletes.apply(lambda row: f"{row['Firstname']} {row['Lastname']}", axis=1).tolist()
 
+        st.subheader(f'Top {top} {disciplin}')
         # Add a selectbox for selecting an athlete
         selected_athlete = st.selectbox("Select Athlete", ["None"] + athlete_names)
 
         # Highlight the selected athlete in the plot
         if selected_athlete != "None":
-            selected_firstname, selected_lastname = selected_athlete.rsplit(' ', 1)
+            selected_firstname, selected_lastname = selected_athlete.split(' ', 1)
             selected_data = df_results_top[(df_results_top['Firstname'] == selected_firstname) & (df_results_top['Lastname'] == selected_lastname)]
             for _, row in selected_data.iterrows():
                 fig.add_trace(go.Scatter(
@@ -655,14 +657,14 @@ if selected == "Jahrgang Season Names":
                     y=[row[str(disciplin) + 'pos']],
                     mode='markers',
                     marker=dict(size=12, color='red'),
-                    text=f"{row['Firstname']} {row['Lastname']}",
+                    text=f"{row['Firstname']} {row['Lastname']}: {row[str(disciplin) + 'pos']}",
                     hoverinfo='text',
                     showlegend=False  # Hide legend for individual athletes
                 ))
 
         # Update layout again to include the highlighted athlete
         fig.update_layout(
-            title=f'Top {top} {disciplin}',
+            #title=f'Top {top} {disciplin}',
             xaxis_title='Season',
             yaxis_title='Weltranglistenposition',
             yaxis=dict(autorange='reversed'),
