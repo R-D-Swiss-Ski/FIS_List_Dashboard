@@ -4,7 +4,7 @@ import os
 import pickle
 import matplotlib.pyplot as plt
 from streamlit_option_menu import option_menu
-from utils import getMeanTopX_Int, getMeanTopX_SUI, collect_data, collect_data_No, collect_data_Entw
+from utils import getMeanTopX_Int, getMeanTopX_SUI, collect_data, collect_data_No, collect_data_Entw, collect_data_Entw_Names
 
 
 ### PAGE CONFIGURATION ###
@@ -19,7 +19,7 @@ st.set_page_config(
 st.title("FIS Points List Dashboard")
 
 selected = option_menu(
-            None, [ "Top 3", "Top 20", "Jahrgang Season", "Jahrgang Season No", "Jahrgang Season Entw." ],
+            None, [ "Top 3", "Top 20", "Jahrgang Season", "Jahrgang Season No", "Jahrgang Season Entw.","Jahrgang Season Names" ],
             icons=["trophy-fill", "trophy","archive", "archive-fill","rocket"],
             orientation= "horizontal",
             styles={
@@ -89,7 +89,6 @@ def create_table(data, discipline, n=3, style=False):
 
     # Display the table in Streamlit
     return formated_dataframe(df_topX_display,n)
-
 
 
 
@@ -548,3 +547,83 @@ if selected == "Jahrgang Season Entw.":
             ax[row, col].annotate(f'{txt:.2f}', (df_results_top['Season'][i], df_results_top['MeanSUI'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#4a0a13')
     
     st.pyplot(fig)
+
+#------------------------------------------------------------Jahrgang Season Names------------------------------------------------------------
+
+if selected == "Jahrgang Season Names":
+
+
+    # User inputs
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        birthyear = st.number_input("Enter birth year:", value=1998, min_value=1994, max_value=2011)
+    
+    with col2:
+        Gender = st.selectbox("Select Gender:", options=['M', 'W'])
+
+    with col3:
+        top = st.number_input("Select Top X:", value=10, min_value=3, max_value=50)
+
+    FISYear = 1
+    # Load the data
+    pickle_file_path = 'data/fis_list_combined_export_new.pkl'
+    if os.path.exists(pickle_file_path):
+        with open(pickle_file_path, 'rb') as f:
+            combined_df = pickle.load(f)
+    else:
+        st.error(f"Pickle file not found at {pickle_file_path}")
+
+    #st.write(combined_df)
+    combined_df['Listname'] = combined_df['Listname'].astype(str)
+    combined_df['Listyear'] = combined_df['Listname'].str[-4:]
+    combined_df['Listyear'] = combined_df['Listyear'].replace("4/25", "2025")
+
+    # Collect data for top 3, 10, and 15
+    #'SL', 'GS', 'SG'])
+    
+
+    def format_season_column(df, birthyear_col='birthyear'):
+        df['Season'] = df['Season'].astype(str).str[2:]
+        df['Season'] = df['Season'].astype(int).apply(lambda x: f"{x-1}/{x}")
+        df['Season'] = "S" + df['Season'].astype(str) + " BY" + df[birthyear_col].astype(str)
+        return df
+    
+    # Plotting
+    fig, ax = plt.subplots(2, 2, figsize=(24, 12), dpi=300)  # Set dpi to 300 for higher resolution
+    fig.subplots_adjust(hspace=0.4)  # Add space between rows
+    col1, col2 = st.columns(2)
+    col3, col4 = st.columns(2)
+    
+    disciplines = ['DH', 'SG', 'SL', 'GS']
+    
+    for i, disciplin in enumerate(disciplines):
+        df_results_top = collect_data_Entw_Names(birthyear, FISYear, Gender, top, disciplin, combined_df)
+
+        #df_results_top = format_season_column(df_results_top)
+        
+        st.write(df_results_top )
+
+    st.write(df_results_top)
+
+'''       row = i // 2
+        col = i % 2
+        
+        ax[row, col].plot(df_results_top['Season'], df_results_top['MeanInt'], label='Int', marker='o', color= '#0328fc')
+        ax[row, col].plot(df_results_top['Season'], df_results_top['MeanSUI'], label='SUI', marker='o', color= '#4a0a13')
+        ax[row, col].set_title('Top ' + str(top) + ' ' + str(disciplin))
+        ax[row, col].invert_yaxis()
+        ax[row, col].set_xlabel('Season')
+        ax[row, col].set_ylabel('Weltranglistenposition')
+        ax[row, col].legend()
+        ax[row, col].grid(True)
+        ax[row, col].set_xticks(df_results_top['Season'])  # Add tick for every year
+        ax[row, col].set_xticklabels(df_results_top['Season'], rotation=45)
+
+        # Add value labels
+        for i, txt in enumerate(df_results_top['MeanInt']):
+            ax[row, col].annotate(f'{txt:.2f}', (df_results_top['Season'][i], df_results_top['MeanInt'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#0328fc')
+        for i, txt in enumerate(df_results_top['MeanSUI']):
+            ax[row, col].annotate(f'{txt:.2f}', (df_results_top['Season'][i], df_results_top['MeanSUI'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#4a0a13')
+        st.pyplot(fig)
+'''

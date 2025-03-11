@@ -40,6 +40,7 @@ def collect_data(birthyear, FISYear, Gender, top, disciplin, combined_df):
         birthyear += 1
     return pd.DataFrame(data)
 
+
 def collect_data_No(birthyear, FISYear, Gender, disciplin, combined_df):
     data = []
     for i in range(11):
@@ -63,12 +64,11 @@ def collect_data_Entw(birthyear, FISYear, Gender, top, disciplin, combined_df):
     data = []
     season = birthyear + 16 + FISYear
     for i in range(11):
-        
         df_season = combined_df[(combined_df['Birthyear'] == birthyear) & 
                                 (combined_df['Listyear'] == str(season)) & 
                                 (combined_df['Gender'] == Gender)]
-        MeanInt = getMeanTopX_Int(df_season, disciplin, top)
-        MeanSUI = getMeanTopX_SUI(df_season, disciplin, top)
+        MeanInt, df_Int = getMeanTopX_Int(df_season, disciplin, top)
+        MeanSUI, df_SUI = getMeanTopX_SUI(df_season, disciplin, top)
         data.append({
             'birthyear': birthyear,
             'Season': season,
@@ -77,3 +77,24 @@ def collect_data_Entw(birthyear, FISYear, Gender, top, disciplin, combined_df):
         })
         season += 1
     return pd.DataFrame(data)
+
+def collect_data_Entw_Names(birthyear, FISYear, Gender, top, disciplin, combined_df):
+    season = birthyear + 16 + FISYear
+    df_names = combined_df[(combined_df['Birthyear'] == birthyear) & 
+                            (combined_df['Gender'] == Gender)] 
+    #df_names = df_names[[str(disciplin) + 'pos', 'Nationcode', 'Firstname', 'Lastname']]
+    
+    df_names = df_names.sort_values(by=str(disciplin) + 'pos', ascending=True)
+    df_names_list = []
+    for listyear in df_names['Listyear'].unique():
+        df_listyear = df_names[df_names['Listyear'] == listyear]
+        df_listyear = df_listyear.sort_values(by=str(disciplin) + 'pos', ascending=True)
+        df_listyear_SUI = df_listyear[df_listyear['Nationcode'] == 'SUI'].head(top)
+        df_listyear_Int = df_listyear[df_listyear['Nationcode'] != 'SUI'].head(top)
+        df_listyear = pd.concat([df_listyear_SUI, df_listyear_Int])
+        df_names_list.append(df_listyear)
+    df_names = pd.concat(df_names_list)
+    
+    print(df_names)
+
+    return pd.DataFrame(df_names)   # return the data and the dataframes of the top x athletes
