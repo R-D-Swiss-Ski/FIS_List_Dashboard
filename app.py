@@ -559,7 +559,7 @@ if selected == "Jahrgang Season Names":
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        birthyear = st.number_input("Enter birth year:", value=1998, min_value=1994, max_value=2011)
+        birthyear = st.number_input("Enter birth year:", value=1998, min_value=1991, max_value=2011)
     
     with col2:
         Gender = st.selectbox("Select Gender:", options=['M', 'W'])
