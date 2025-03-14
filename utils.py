@@ -95,8 +95,25 @@ def collect_data_Entw_Names(birthyear, FISYear, Gender, top, disciplin, combined
         df_names_list.append(df_listyear)
     df_names = pd.concat(df_names_list)
     df_names = df_names.rename(columns={'Listyear': 'Season'})
-    
-    
-    print(df_names)
-
     return pd.DataFrame(df_names)   # return the data and the dataframes of the top x athletes
+
+
+def FIS_Year_Compare(Gender, top, disciplin, df_names):
+
+    df_names = df_names[(df_names['Gender'] == Gender)] 
+    df_names = df_names[(df_names['Birthyear'] >= 1998) & (df_names['Birthyear'] <= 2011)]
+    df_listyear_Int = pd.DataFrame()
+    df_listyear_SUI = pd.DataFrame()
+
+    for listyear in range(1, 11):
+        df_temp_Int = df_names[(df_names['FISyearAthlete'] == listyear) & (df_names['Nationcode'] != 'SUI')]
+        df_temp_Int = df_temp_Int.sort_values(by=str(disciplin) + 'pos', ascending=True).head(top)
+        df_listyear_Int = pd.concat([df_listyear_Int, df_temp_Int])
+
+        df_temp_SUI = df_names[(df_names['FISyearAthlete'] == listyear) & (df_names['Nationcode'] == 'SUI')]
+        df_temp_SUI = df_temp_SUI.sort_values(by=str(disciplin) + 'pos', ascending=True).head(top)
+        df_listyear_SUI = pd.concat([df_listyear_SUI, df_temp_SUI])
+
+    df_listyear_Int = df_listyear_Int.sort_values(by='FISyearAthlete', ascending=True).rename(columns={'Listyear': 'Season'})
+    df_listyear_SUI = df_listyear_SUI.sort_values(by='FISyearAthlete', ascending=True).rename(columns={'Listyear': 'Season'})
+    return df_listyear_Int, df_listyear_SUI  # return the dataframes of the top x athletes
