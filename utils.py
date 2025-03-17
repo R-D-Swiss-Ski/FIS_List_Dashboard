@@ -78,29 +78,6 @@ def collect_data_Entw(birthyear, FISYear, Gender, top, disciplin, combined_df):
         season += 1
     return pd.DataFrame(data)
 
-def collect_data_Entw_Names(birthyear, FISYear, Gender, top, disciplin, combined_df):
-    season = birthyear + 16 + FISYear
-    df_names = combined_df[(combined_df['Birthyear'] == birthyear) & 
-                            (combined_df['Gender'] == Gender)] 
-    #df_names = df_names[[str(disciplin) + 'pos', 'Nationcode', 'Firstname', 'Lastname']]
-    
-    df_names = df_names.sort_values(by=str(disciplin) + 'pos', ascending=True)
-    df_names_list = []
-    for listyear in df_names['Listyear'].unique():
-        df_listyear = df_names[df_names['Listyear'] == listyear]
-        df_listyear = df_listyear.sort_values(by=str(disciplin) + 'pos', ascending=True)
-        df_listyear_SUI = df_listyear[df_listyear['Nationcode'] == 'SUI'].head(top)
-        df_listyear_Int = df_listyear[df_listyear['Nationcode'] != 'SUI'].head(top)
-        df_listyear = pd.concat([df_listyear_SUI, df_listyear_Int])
-        df_names_list.append(df_listyear)
-    df_names = pd.concat(df_names_list)
-    df_names = df_names.rename(columns={'Listyear': 'Season'})
-    
-    
-    print(df_names)
-
-    return pd.DataFrame(df_names)   # return the data and the dataframes of the top x athletes
-
 
 def FIS_Year_Compare(Gender, top, disciplin, df_names):
 
@@ -121,3 +98,9 @@ def FIS_Year_Compare(Gender, top, disciplin, df_names):
     df_listyear_Int = df_listyear_Int.sort_values(by='FISyearAthlete', ascending=True).rename(columns={'Listyear': 'Season'})
     df_listyear_SUI = df_listyear_SUI.sort_values(by='FISyearAthlete', ascending=True).rename(columns={'Listyear': 'Season'})
     return df_listyear_Int, df_listyear_SUI  # return the dataframes of the top x athletes
+
+def getTopXAthletes(df_FIS_List, Gender, disciplin, top):
+    df_FIS_List = df_FIS_List[(df_FIS_List['gender'] == Gender)]
+    df_topX = df_FIS_List.sort_values(by=str(disciplin) + 'pos', ascending=True)
+    df_topX = df_topX.head(top)
+    return df_topX
