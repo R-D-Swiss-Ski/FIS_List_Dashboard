@@ -95,6 +95,10 @@ def collect_data_Entw_Names(birthyear, FISYear, Gender, top, disciplin, combined
         df_names_list.append(df_listyear)
     df_names = pd.concat(df_names_list)
     df_names = df_names.rename(columns={'Listyear': 'Season'})
+    
+    
+    print(df_names)
+
     return pd.DataFrame(df_names)   # return the data and the dataframes of the top x athletes
 
 

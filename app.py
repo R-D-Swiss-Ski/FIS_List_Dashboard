@@ -21,7 +21,7 @@ st.set_page_config(
 st.title("FIS Points List Dashboard")
 
 selected = option_menu(
-            None, [ "Top 3", "Top 20", "Jahrgang Season", "Jahrgang Season No", "Jahrgang Season Entw.","Jahrgang Season Names","FIS Year Compare" ],
+            None, [ "Top 3", "Top 20", "Jahrgang Season", "Jahrgang Season No", "Jahrgang Season Entw.","Jahrgang Season Names" ],
             icons=["trophy-fill", "trophy","archive", "archive-fill","rocket"],
             orientation= "horizontal",
             styles={
@@ -40,6 +40,16 @@ def get_latest_fis_list():
     data.columns = map(str.lower, data.columns)
 
     return data
+
+def load_combined_data(path_combinded):
+    if os.path.exists(path_combinded):
+        with open(path_combinded, 'rb') as f:
+            combined_df = pickle.load(f)
+        combined_df.columns = map(str.lower, combined_df.columns)
+        return combined_df
+    else:
+        st.error(f"Pickle file not found at {path_combinded}")
+        return None
 
 def highlight_suiss(val):
     if val == "SUI":
@@ -97,7 +107,7 @@ def create_table(data, discipline, n=3, style=False):
 #------------------------------------------------------------TOP 3------------------------------------------------------------
 if selected == "Top 3":
 
-    st.title("FIS List 18th of 2025 (430 - 05.03.2025)")
+    st.title("FIS List 17th of 2025 (408 - 23-02-2025)")
     # Load the data (Change to read from pickle for easier solution)
     data = get_latest_fis_list()
 
@@ -307,7 +317,7 @@ if selected == "Jahrgang Season":
         disciplin = st.selectbox("Select Discipline:", options=['DH', 'SL', 'GS', 'SG', 'AC'])
 
     # Load the data
-    pickle_file_path = path_latest_fis_list_combinded
+    pickle_file_path = 'data/fis_list_combined_export_new.pkl'
     if os.path.exists(pickle_file_path):
         with open(pickle_file_path, 'rb') as f:
             combined_df = pickle.load(f)
@@ -416,7 +426,7 @@ if selected == "Jahrgang Season No":
         disciplin = st.selectbox("Select Discipline:", options=['DH', 'SL', 'GS', 'SG', 'AC'])
 
     # Load the data
-    pickle_file_path = path_latest_fis_list_combinded
+    pickle_file_path = 'data/fis_list_combined_export_new.pkl'
     if os.path.exists(pickle_file_path):
         with open(pickle_file_path, 'rb') as f:
             combined_df = pickle.load(f)
@@ -583,30 +593,31 @@ if selected == "Jahrgang Season Names":
 
 
     def format_season_column(df, birthyear_col='birthyear'):
-        df['Season'] = df['Season'].astype(str).str[2:]
-        df['Season'] = df['Season'].astype(int).apply(lambda x: f"{x-1}/{x}")
-        df['Season'] = "S" + df['Season'].astype(str) + " BY" + df[birthyear_col].astype(str)
+        df['season'] = df['season'].astype(str).str[2:]
+        df['season'] = df['season'].astype(int).apply(lambda x: f"{x-1}/{x}")
+        df['season'] = "S" + df['season'].astype(str) + " BY" + df[birthyear_col].astype(str)
         return df
     
     # Plotting
     fig, ax = plt.subplots(2, 2, figsize=(24, 12), dpi=300)  # Set dpi to 300 for higher resolution
     fig.subplots_adjust(hspace=0.4)  # Add space between rows
     
-    disciplines = ['DH', 'SG', 'SL', 'GS']
+    disciplines = ['dh', 'sg', 'sl', 'gs']
     
     for i, disciplin in enumerate(disciplines):
         df_results_top = collect_data_Entw_Names(birthyear, FISYear, Gender, top, disciplin, combined_df)
+        df_results_top.columns = map(str.lower, df_results_top.columns)
 
         # Ensure 'Season' is treated as a categorical variable for correct plotting
-        df_results_top['Season'] = pd.Categorical(df_results_top['Season'], ordered=True)
+        df_results_top['season'] = pd.Categorical(df_results_top['season'], ordered=True)
 
         # Group and calculate mean positions for non-SUI and SUI athletes
-        mean_pos_int = df_results_top[df_results_top['Nationcode'] != "SUI"].groupby('Season')[str(disciplin) + 'pos'].mean()
-        mean_pos_sui = df_results_top[df_results_top['Nationcode'] == "SUI"].groupby('Season')[str(disciplin) + 'pos'].mean()
+        mean_pos_int = df_results_top[df_results_top['nationcode'] != "SUI"].groupby('season')[str(disciplin) + 'pos'].mean()
+        mean_pos_sui = df_results_top[df_results_top['nationcode'] == "SUI"].groupby('season')[str(disciplin) + 'pos'].mean()
 
         # Calculate the range for non-SUI and SUI athletes
-        range_pos_int = df_results_top[df_results_top['Nationcode'] != "SUI"].groupby('Season')[str(disciplin) + 'pos'].agg(['min', 'max'])
-        range_pos_sui = df_results_top[df_results_top['Nationcode'] == "SUI"].groupby('Season')[str(disciplin) + 'pos'].agg(['min', 'max'])
+        range_pos_int = df_results_top[df_results_top['nationcode'] != "SUI"].groupby('season')[str(disciplin) + 'pos'].agg(['min', 'max'])
+        range_pos_sui = df_results_top[df_results_top['nationcode'] == "SUI"].groupby('season')[str(disciplin) + 'pos'].agg(['min', 'max'])
 
         # Create the plot
         fig = go.Figure()
@@ -624,24 +635,24 @@ if selected == "Jahrgang Season Names":
 
         # Add hover text with athlete names and positions
         added_names = set()
-        for season in df_results_top['Season'].unique():
-            season_data = df_results_top[df_results_top['Season'] == season]
+        for season in df_results_top['season'].unique():
+            season_data = df_results_top[df_results_top['season'] == season]
             for _, row in season_data.iterrows():
-                athlete_name = f"{row['Firstname']} {row['Lastname']}"
+                athlete_name = f"{row['firstname']} {row['lastname']}"
                 position = row[str(disciplin) + 'pos']
                 fig.add_trace(go.Scatter(
                     x=[season],
                     y=[position],
                     mode='markers',
-                    marker=dict(size=10, color='#0328fc' if row['Nationcode'] != 'SUI' else '#4a0a13'),
+                    marker=dict(size=10, color='#0328fc' if row['nationcode'] != 'SUI' else '#4a0a13'),
                     text=f"{athlete_name}: {position}",
                     hoverinfo='text',
                     showlegend=False  # Hide legend for individual athletes
                 ))
 
         # Generate a list of unique Swiss athlete names
-        unique_athletes = df_results_top[df_results_top['Nationcode'] == "SUI"][['Firstname', 'Lastname']].drop_duplicates()
-        athlete_names = unique_athletes.apply(lambda row: f"{row['Firstname']} {row['Lastname']}", axis=1).tolist()
+        unique_athletes = df_results_top[df_results_top['nationcode'] == "SUI"][['firstname', 'lastname']].drop_duplicates()
+        athlete_names = unique_athletes.apply(lambda row: f"{row['firstname']} {row['lastname']}", axis=1).tolist()
 
         st.subheader(f'Top {top} {disciplin}')
         # Add a selectbox for selecting an athlete
@@ -650,21 +661,20 @@ if selected == "Jahrgang Season Names":
         # Highlight the selected athlete in the plot
         if selected_athlete != "None":
             selected_firstname, selected_lastname = selected_athlete.split(' ', 1)
-            selected_data = df_results_top[(df_results_top['Firstname'] == selected_firstname) & (df_results_top['Lastname'] == selected_lastname)]
+            selected_data = df_results_top[(df_results_top['firstname'] == selected_firstname) & (df_results_top['lastname'] == selected_lastname)]
             for _, row in selected_data.iterrows():
                 fig.add_trace(go.Scatter(
-                    x=[row['Season']],
+                    x=[row['season']],
                     y=[row[str(disciplin) + 'pos']],
                     mode='markers',
                     marker=dict(size=12, color='red'),
-                    text=f"{row['Firstname']} {row['Lastname']}: {row[str(disciplin) + 'pos']}",
+                    text=f"{row['firstname']} {row['lastname']}: {row[str(disciplin) + 'pos']}",
                     hoverinfo='text',
                     showlegend=False  # Hide legend for individual athletes
                 ))
 
         # Update layout again to include the highlighted athlete
         fig.update_layout(
-            #title=f'Top {top} {disciplin}',
             xaxis_title='Season',
             yaxis_title='Weltranglistenposition',
             yaxis=dict(autorange='reversed'),
