@@ -6,7 +6,7 @@ import os
 import pickle
 import matplotlib.pyplot as plt
 from streamlit_option_menu import option_menu
-from utils import getMeanTopX_Int, getMeanTopX_SUI, collect_data, collect_data_No, collect_data_Entw, collect_data_Entw_Names, FIS_Year_Compare, getTopXAthletes
+from utils import getMeanTopX_Int, getMeanTopX_SUI, collect_data, collect_data_No, collect_data_Entw, getTopXAthletes
 
 
 ### PAGE CONFIGURATION ###
@@ -108,7 +108,7 @@ def create_table(data, discipline, n=3, style=False):
 #------------------------------------------------------------TOP 3------------------------------------------------------------
 if selected == "Top 3":
 
-    st.title("FIS List 17th of 2025 (408 - 23-02-2025)")
+    st.title("FIS List 18th of 2025 (430 - 05-03-2025)")
     # Load the data (Change to read from pickle for easier solution)
     data = get_latest_fis_list()
 
@@ -573,7 +573,7 @@ if selected == "FIS Year Compare":
         Gender = st.selectbox("Select Gender:", options=['M', 'W'])
  
     with col2:
-        top = st.number_input("Select Top X:", value=10, min_value=3, max_value=50)
+        top = st.number_input("Select Top X:", value=30, min_value=3, max_value=50)
     
     
     # Load the data
@@ -584,15 +584,10 @@ if selected == "FIS Year Compare":
     else:
         st.error(f"Pickle file not found at {pickle_file_path}")
 
-    
     combined_df.columns = map(str.lower, combined_df.columns)
 
-
-    print(combined_df.columns)
- 
     df_FIS_list = get_latest_fis_list()
-    print(df_FIS_list)
- 
+
     #st.write(combined_df)
     combined_df.columns = map(str.lower, combined_df.columns)
     combined_df['listname'] = combined_df['listname'].astype(str)
@@ -610,76 +605,24 @@ if selected == "FIS Year Compare":
     disciplines = ['dh', 'sg', 'sl', 'gs']
     for i, disciplin in enumerate(disciplines):
  
-        df_FIS_list.columns = map(str.lower, df_FIS_list.columns)
-        combined_df.columns = map(str.lower, combined_df.columns)
- 
         df_CurrentTopXAthletes = getTopXAthletes(df_FIS_list, Gender, disciplin , top)
-        print(df_CurrentTopXAthletes)
- 
- 
-        df_results_Int, df_results_SUI = FIS_Year_Compare(Gender, top, disciplin, combined_df)
-        print(df_results_SUI, df_results_Int)   
+
+        # Loop through each FIS year and get the values
+        for fisyear in range(1, 8):
+            df_filtered = combined_df[(combined_df['fisyearathlete'] == fisyear)]
+            df_filtered = df_filtered[df_filtered['competitorid'].isin(df_CurrentTopXAthletes['competitorid'])]
 
 
-        # Calculate the range for non-SUI and SUI athletes
-        range_pos_int = df_results_Int.groupby('FISyearAthlete')[str(disciplin) + 'pos'].agg(['min', 'max'])
-        range_pos_sui = df_results_SUI.groupby('FISyearAthlete')[str(disciplin) + 'pos'].agg(['min', 'max'])
+           
+            if not df_filtered.empty:
+                if 'df_topX_past_results' not in locals():
+                    df_topX_past_results = df_filtered.copy()
+                else:
+                    df_topX_past_results = pd.concat([df_topX_past_results, df_filtered], ignore_index=True)
+                    df_topX_past_results = df_topX_past_results[[
+                        'lastname', 'firstname', 'nationcode', 'gender', 'birthdate', 'competitorid', str(disciplin) + 'pos'
+                    ]]
+            
+            print(df_topX_past_results)
 
-        # Create the plot
-        fig = go.Figure()
-
-        # Add traces for mean positions
-        fig.add_trace(go.Scatter(x=mean_pos_int.index, y=mean_pos_int, mode='lines+markers', name='meanINT', marker=dict(color='#0328fc')))
-        fig.add_trace(go.Scatter(x=mean_pos_sui.index, y=mean_pos_sui, mode='lines+markers', name='meanSUI', marker=dict(color='#4a0a13')))
-
-        # Add traces for range (shaded area)
-        fig.add_trace(go.Scatter(x=range_pos_int.index, y=range_pos_int['min'], mode='lines', line=dict(width=0), showlegend=False))
-        fig.add_trace(go.Scatter(x=range_pos_int.index, y=range_pos_int['max'], mode='lines', fill='tonexty', name='INT Range', fillcolor='rgba(3, 40, 252, 0.2)', line=dict(width=0)))
-
-        fig.add_trace(go.Scatter(x=range_pos_sui.index, y=range_pos_sui['min'], mode='lines', line=dict(width=0), showlegend=False))
-        fig.add_trace(go.Scatter(x=range_pos_sui.index, y=range_pos_sui['max'], mode='lines', fill='tonexty', name='SUI Range', fillcolor='rgba(74, 10, 19, 0.2)', line=dict(width=0)))
-
-        st.subheader(f'Top {top} {disciplin} by FIS Year Overall')  
-        # Add hover text with athlete names and positions
-        added_names = set()
-        for fis_year in df_results_Int['FISyearAthlete'].unique():
-            season_data_int = df_results_Int[df_results_Int['FISyearAthlete'] == fis_year]
-            for _, row in season_data_int.iterrows():
-                athlete_name = f"{row['Firstname']} {row['Lastname']}"
-                position = row[str(disciplin) + 'pos']
-                fig.add_trace(go.Scatter(
-                    x=[fis_year],
-                    y=[position],
-                    mode='markers',
-                    marker=dict(size=10, color='#0328fc'),
-                    text=f"{athlete_name}: {position}",
-                    hoverinfo='text',
-                    showlegend=False  # Hide legend for individual athletes
-                ))
-
-        for fis_year in df_results_SUI['FISyearAthlete'].unique():
-            season_data_sui = df_results_SUI[df_results_SUI['FISyearAthlete'] == fis_year]
-            for _, row in season_data_sui.iterrows():
-                athlete_name = f"{row['Firstname']} {row['Lastname']}"
-                position = row[str(disciplin) + 'pos']
-                fig.add_trace(go.Scatter(
-                    x=[fis_year],
-                    y=[position],
-                    mode='markers',
-                    marker=dict(size=10, color='#4a0a13'),
-                    text=f"{athlete_name}: {position}",
-                    hoverinfo='text',
-                    showlegend=False  # Hide legend for individual athletes
-                ))
-
-        # Update layout again to include the highlighted athlete
-        fig.update_layout(
-            xaxis_title='FIS Year',
-            yaxis_title='Weltranglistenposition',
-            yaxis=dict(autorange='reversed'),
-            legend_title='Legend',
-            hovermode='closest'
-        )
-
-        # Display the updated plot in Streamlit
-        st.plotly_chart(fig, key=f"highlighted_plot_{disciplin}")
+      
