@@ -31,8 +31,8 @@ selected = option_menu(
                 "nav-link-selected": {"background-color": "rgba(0, 104, 201, 0.5)", "font-weight": "normal", "color": "white"},
             })
 
-path_latest_fis_list_combinded = "data/fis_list_combined_14_3_25.pkl"
-path_latest_fis_list = "data/FIS-points-list-AL-2025-430.csv"
+path_latest_fis_list_combinded = "data/fis_list_combined_04_4_25.pkl"
+path_latest_fis_list = "data/FIS-points-list-AL-2025-411.csv"
 
 ### HELPER FUNCTIONS ###
 def get_latest_fis_list():
@@ -108,7 +108,7 @@ def create_table(data, discipline, n=3, style=False):
 #------------------------------------------------------------TOP 3------------------------------------------------------------
 if selected == "Top 3":
 
-    st.title("FIS List 18th of 2025 (430 - 05-03-2025)")
+    st.title("FIS List 20th of 2025 (411 - 01-04-2025)")
     # Load the data (Change to read from pickle for easier solution)
     data = get_latest_fis_list()
 
@@ -318,7 +318,7 @@ if selected == "Jahrgang Season":
         disciplin = st.selectbox("Select Discipline:", options=['DH', 'SL', 'GS', 'SG', 'AC'])
 
     # Load the data
-    pickle_file_path = 'data/fis_list_combined_export_new.pkl'
+    pickle_file_path = path_latest_fis_list_combinded
     if os.path.exists(pickle_file_path):
         with open(pickle_file_path, 'rb') as f:
             combined_df = pickle.load(f)
@@ -427,7 +427,7 @@ if selected == "Jahrgang Season No":
         disciplin = st.selectbox("Select Discipline:", options=['DH', 'SL', 'GS', 'SG', 'AC'])
 
     # Load the data
-    pickle_file_path = 'data/fis_list_combined_export_new.pkl'
+    pickle_file_path = path_latest_fis_list_combinded
     if os.path.exists(pickle_file_path):
         with open(pickle_file_path, 'rb') as f:
             combined_df = pickle.load(f)
@@ -505,7 +505,7 @@ if selected == "Jahrgang Season Entw.":
 
     FISYear = 1
     # Load the data
-    pickle_file_path = 'data/fis_list_combined_export_new.pkl'
+    pickle_file_path = path_latest_fis_list_combinded
     if os.path.exists(pickle_file_path):
         with open(pickle_file_path, 'rb') as f:
             combined_df = pickle.load(f)
@@ -564,65 +564,60 @@ if selected == "Jahrgang Season Entw.":
 
 #------------------------------------------------------------FIS Year Compare------------------------------------------------------------
 
+#------------------------------------------------------------FIS Year Compare------------------------------------------------------------
+
 if selected == "FIS Year Compare":
     st.markdown("<h3 style='color:blue;'>International</h3><h3 style='color:#4a0a13; display:inline;'> vs Swiss</h3>", unsafe_allow_html=True)
   
     col1, col2 = st.columns(2)
- 
+
     with col1:
         Gender = st.selectbox("Select Gender:", options=['M', 'W'])
- 
     with col2:
-        top = st.number_input("Select Top X:", value=30, min_value=3, max_value=50)
-    
-    
+        top = st.number_input("Select Top X:", value=3, min_value=3, max_value=50)
+
     # Load the data
-    pickle_file_path = 'data/fis_list_combined_export_new.pkl'
-    if os.path.exists(pickle_file_path):
-        with open(pickle_file_path, 'rb') as f:
-            combined_df = pickle.load(f)
-    else:
-        st.error(f"Pickle file not found at {pickle_file_path}")
-
+    combined_df = load_combined_data(path_latest_fis_list_combinded)
     combined_df.columns = map(str.lower, combined_df.columns)
-
     df_FIS_list = get_latest_fis_list()
+    df_FIS_list.columns = map(str.lower, df_FIS_list.columns)
 
-    #st.write(combined_df)
-    combined_df.columns = map(str.lower, combined_df.columns)
+    # Ensure both data sources have matching key columns
+    st.write("combined_df columns:", combined_df.columns.tolist())
+    st.write("df_FIS_list columns:", df_FIS_list.columns.tolist())
+
     combined_df['listname'] = combined_df['listname'].astype(str)
     combined_df['listyear'] = combined_df['listname'].str[-4:]
     combined_df['listyear'] = combined_df['listyear'].replace("4/25", "2025")
     combined_df['listyear'] = pd.to_numeric(combined_df['listyear'], errors='coerce').fillna(0).astype(int)
     combined_df['birthyear'] = pd.to_numeric(combined_df['birthyear'], errors='coerce').fillna(0).astype(int)
     combined_df['fisyearathlete'] = combined_df['listyear'] - combined_df['birthyear'] - 16
- 
+
+    # Ensure competitorid is the same type in both DataFrames
+    df_FIS_list['competitorid'] = df_FIS_list['competitorid'].astype(str)
+    combined_df['competitorid'] = combined_df['competitorid'].astype(str)
     
-    # Plotting
-    fig, ax = plt.subplots(2, 2, figsize=(24, 12), dpi=300)  # Set dpi to 300 for higher resolution
-    fig.subplots_adjust(hspace=0.4)  # Add space between rows
-    
+    # For each discipline, build the merged base DataFrame containing the position values for FIS years 1 to 11.
     disciplines = ['dh', 'sg', 'sl', 'gs']
-    for i, disciplin in enumerate(disciplines):
- 
-        df_CurrentTopXAthletes = getTopXAthletes(df_FIS_list, Gender, disciplin , top)
+    for disciplin in disciplines:
+        df_CurrentTopXAthletes = getTopXAthletes(df_FIS_list, Gender, disciplin, top)
+        st.write(f"Top {top} athletes for {disciplin}:", df_CurrentTopXAthletes)
+        if df_CurrentTopXAthletes.empty:
+            st.warning(f"No top athletes found for discipline {disciplin} and gender {Gender}. Check filtering.")
+        
+        # Initialize base DataFrame with competitor IDs from the top athletes
+        base = df_CurrentTopXAthletes[['competitorid']].copy()
 
-        # Loop through each FIS year and get the values
-        for fisyear in range(1, 8):
-            df_filtered = combined_df[(combined_df['fisyearathlete'] == fisyear)]
-            df_filtered = df_filtered[df_filtered['competitorid'].isin(df_CurrentTopXAthletes['competitorid'])]
-
-
-           
-            if not df_filtered.empty:
-                if 'df_topX_past_results' not in locals():
-                    df_topX_past_results = df_filtered.copy()
-                else:
-                    df_topX_past_results = pd.concat([df_topX_past_results, df_filtered], ignore_index=True)
-                    df_topX_past_results = df_topX_past_results[[
-                        'lastname', 'firstname', 'nationcode', 'gender', 'birthdate', 'competitorid', str(disciplin) + 'pos'
-                    ]]
-            
-            print(df_topX_past_results)
-
-      
+        for fisyear in range(1, 12):
+            # Filter the season data for the FIS year
+            df_season = combined_df[combined_df['fisyearathlete'] == fisyear].copy()
+            # Define the column name holding position values for the given discipline
+            pos_column = disciplin.lower() + 'pos'
+            # Filter rows that match our top competitor IDs and extract only the competitorid and position column
+            df_season_topX = df_season[df_season['competitorid'].isin(base['competitorid'])][['competitorid', pos_column]]
+            # Rename the position column to include the FIS year suffix
+            df_season_topX = df_season_topX.rename(columns={pos_column: f'pos{disciplin.lower()}{fisyear}'})
+            # Merge the actual position values into the base DataFrame
+            base = base.merge(df_season_topX, on='competitorid', how='left')
+        
+        st.write(f"Final merged data for {disciplin}:", base)
