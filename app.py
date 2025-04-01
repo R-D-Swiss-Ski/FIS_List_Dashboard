@@ -31,7 +31,7 @@ selected = option_menu(
                 "nav-link-selected": {"background-color": "rgba(0, 104, 201, 0.5)", "font-weight": "normal", "color": "white"},
             })
 
-path_latest_fis_list_combinded = "data/fis_list_combined_01_4_25.pkl"
+path_latest_fis_list_combinded = "data/fis_list_combined_01_04_25.pkl"
 path_latest_fis_list = "data/FIS-points-list-AL-2025-411.csv"
 
 ### HELPER FUNCTIONS ###
