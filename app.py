@@ -21,7 +21,7 @@ st.set_page_config(
 st.title("FIS Points List Dashboard")
 
 selected = option_menu(
-            None, [ "Top 3", "Top 20", "Jahrgang Season", "Jahrgang Season No", "Jahrgang Season Entw.", "TOP30 Entwicklung"],
+            None, [ "Top 3", "Top 20", "Year of birth over seasons", "Year of birth and Season #", "Year of birth Development over Seasons", "Current Top Athletes - Development"],
             icons=["trophy-fill", "trophy","clipboard2-pulse-fill", "receipt","rocket","speedometer2"],
             orientation= "horizontal",
             styles={
@@ -46,7 +46,7 @@ def load_combined_data(path_latest_fis_list_combinded):
     if os.path.exists(path_latest_fis_list_combinded):
         with open(path_latest_fis_list_combinded, 'rb') as f:
             combined_df = pickle.load(f)
-        combined_df.columns = map(str.lower, combined_df.columns)
+        combined_df.columns = list(map(str.lower, combined_df.columns))
         return combined_df
     else:
         st.error(f"Pickle file not found at {path_latest_fis_list_combinded}")
@@ -364,7 +364,7 @@ if selected == "Top 20":
 
 
 #------------------------------------------------------------Jahrgang Season------------------------------------------------------------
-if selected == "Jahrgang Season":
+if selected == "Year of birth over seasons":
 
     # User inputs
     col1, col2, col3, col4 = st.columns(4)
@@ -382,17 +382,19 @@ if selected == "Jahrgang Season":
         disciplin = st.selectbox("Select Discipline:", options=['DH', 'SL', 'GS', 'SG', 'AC'])
 
     # Load the data
-    pickle_file_path = path_latest_fis_list_combinded
-    if os.path.exists(pickle_file_path):
-        with open(pickle_file_path, 'rb') as f:
-            combined_df = pickle.load(f)
-    else:
-        st.error(f"Pickle file not found at {pickle_file_path}")
+    combined_df = load_combined_data(path_latest_fis_list_combinded)
+    combined_df.columns = combined_df.columns.str.lower()
 
-    #st.write(combined_df)
-    combined_df['Listname'] = combined_df['Listname'].astype(str)
-    combined_df['Listyear'] = combined_df['Listname'].str[-4:]
-    combined_df['Listyear'] = combined_df['Listname'].replace("4/25", "2025")
+    combined_df['listname'] = combined_df['listname'].astype(str)
+    combined_df['listyear'] = (
+        combined_df['listname']
+        .str[-4:]
+        .replace("4/25", "2025")
+    )
+    combined_df['listyear'] = pd.to_numeric(combined_df['listyear'], errors='coerce').fillna(0).astype(int)
+    combined_df['birthyear'] = pd.to_numeric(combined_df['birthyear'], errors='coerce').fillna(0).astype(int)
+    combined_df['fisyearathlete'] = combined_df['listyear'] - combined_df['birthyear'] - 16
+    combined_df['fisyearathlete'] = combined_df['fisyearathlete'].clip(lower=0).astype(int)
 
     # Collect data for top 3, 10, and 15
     df_results_top3 = collect_data(birthyear, FISYear, Gender, 3, disciplin, combined_df)
@@ -400,9 +402,9 @@ if selected == "Jahrgang Season":
     df_results_top15 = collect_data(birthyear, FISYear, Gender, 15, disciplin, combined_df)
 
     def format_season_column(df, birthyear_col='birthyear'):
-        df['Season'] = df['Season'].astype(str).str[2:]
-        df['Season'] = df['Season'].astype(int).apply(lambda x: f"{x-1}/{x}")
-        df['Season'] = "S" + df['Season'].astype(str) + " BY" + df[birthyear_col].astype(str)
+        df['season'] = df['season'].astype(str).str[2:]
+        df['season'] = df['season'].astype(int).apply(lambda x: f"{x-1}/{x}")
+        df['season'] = "S" + df['season'].astype(str) + " BY" + df[birthyear_col].astype(str)
         return df
 
     df_results_top3 = format_season_column(df_results_top3)
@@ -414,66 +416,66 @@ if selected == "Jahrgang Season":
     col1, col2, col3 = st.columns(3)
     with col1:
         # Top 3 Plot
-        ax[0].plot(df_results_top3['Season'], df_results_top3['MeanInt'], label='Int', marker='o', color= '#0328fc')
-        ax[0].plot(df_results_top3['Season'], df_results_top3['MeanSUI'], label='SUI', marker='o', color= '#4a0a13')
+        ax[0].plot(df_results_top3['season'], df_results_top3['meanint'], label='Int', marker='o', color= '#0328fc')
+        ax[0].plot(df_results_top3['season'], df_results_top3['meansui'], label='SUI', marker='o', color= '#4a0a13')
         ax[0].set_title('Top 3 ' + str(disciplin))
         ax[0].invert_yaxis()
         ax[0].set_xlabel('Season')
         ax[0].set_ylabel('Weltranglistenposition')
         ax[0].legend()
         ax[0].grid(True)
-        ax[0].set_xticks(df_results_top3['Season'])  # Add tick for every year
-        ax[0].set_xticklabels(df_results_top3['Season'], rotation=45)
+        ax[0].set_xticks(df_results_top3['season'])  # Add tick for every year
+        ax[0].set_xticklabels(df_results_top3['season'], rotation=45)
 
         # Add value labels
-        for i, txt in enumerate(df_results_top3['MeanInt']):
-            ax[0].annotate(f'{txt:.2f}', (df_results_top3['Season'][i], df_results_top3['MeanInt'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#0328fc')
-        for i, txt in enumerate(df_results_top3['MeanSUI']):
-            ax[0].annotate(f'{txt:.2f}', (df_results_top3['Season'][i], df_results_top3['MeanSUI'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#4a0a13')
+        for i, txt in enumerate(df_results_top3['meanint']):
+            ax[0].annotate(f'{txt:.2f}', (df_results_top3['season'][i], df_results_top3['meanint'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#0328fc')
+        for i, txt in enumerate(df_results_top3['meansui']):
+            ax[0].annotate(f'{txt:.2f}', (df_results_top3['season'][i], df_results_top3['meansui'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#4a0a13')
 
     with col2:
         # Top 10 Plot
-        ax[1].plot(df_results_top10['Season'], df_results_top10['MeanInt'], label='Int', marker='o', color= '#0328fc')
-        ax[1].plot(df_results_top10['Season'], df_results_top10['MeanSUI'], label='SUI', marker='o', color= '#4a0a13')
+        ax[1].plot(df_results_top10['season'], df_results_top10['meanint'], label='Int', marker='o', color= '#0328fc')
+        ax[1].plot(df_results_top10['season'], df_results_top10['meansui'], label='SUI', marker='o', color= '#4a0a13')
         ax[1].set_title('Top 10 ' + str(disciplin))
         ax[1].invert_yaxis()
         ax[1].set_xlabel('Season')
         ax[1].set_ylabel('Weltranglistenposition')
         ax[1].legend()
         ax[1].grid(True)
-        ax[1].set_xticks(df_results_top10['Season'])  # Add tick for every year
-        ax[1].set_xticklabels(df_results_top10['Season'], rotation=45)
+        ax[1].set_xticks(df_results_top10['season'])  # Add tick for every year
+        ax[1].set_xticklabels(df_results_top10['season'], rotation=45)
 
          # Add value labels
-        for i, txt in enumerate(df_results_top10['MeanInt']):
-            ax[1].annotate(f'{txt:.2f}', (df_results_top10['Season'][i], df_results_top10['MeanInt'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#0328fc')
-        for i, txt in enumerate(df_results_top10['MeanSUI']):
-            ax[1].annotate(f'{txt:.2f}', (df_results_top10['Season'][i], df_results_top10['MeanSUI'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#4a0a13')
+        for i, txt in enumerate(df_results_top10['meanint']):
+            ax[1].annotate(f'{txt:.2f}', (df_results_top10['season'][i], df_results_top10['meanint'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#0328fc')
+        for i, txt in enumerate(df_results_top10['meansui']):
+            ax[1].annotate(f'{txt:.2f}', (df_results_top10['season'][i], df_results_top10['meansui'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#4a0a13')
 
     with col3:
         # Top 15 Plot
-        ax[2].plot(df_results_top15['Season'], df_results_top15['MeanInt'], label='Int', marker='o', color= '#0328fc')
-        ax[2].plot(df_results_top15['Season'], df_results_top15['MeanSUI'], label='SUI', marker='o', color= '#4a0a13') 
+        ax[2].plot(df_results_top15['season'], df_results_top15['meanint'], label='Int', marker='o', color= '#0328fc')
+        ax[2].plot(df_results_top15['season'], df_results_top15['meansui'], label='SUI', marker='o', color= '#4a0a13') 
         ax[2].set_title('Top 15 ' + str(disciplin))
         ax[2].invert_yaxis()
         ax[2].set_xlabel('Season')
         ax[2].set_ylabel('Weltranglistenposition')
         ax[2].legend()
         ax[2].grid(True)
-        ax[2].set_xticks(df_results_top15['Season'])  # Add tick for every year
-        ax[2].set_xticklabels(df_results_top15['Season'], rotation=45)
+        ax[2].set_xticks(df_results_top15['season'])  # Add tick for every year
+        ax[2].set_xticklabels(df_results_top15['season'], rotation=45)
      
         # Add value labels
-        for i, txt in enumerate(df_results_top15['MeanInt']):
-            ax[2].annotate(f'{txt:.2f}', (df_results_top15['Season'][i], df_results_top15['MeanInt'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#0328fc')
-        for i, txt in enumerate(df_results_top15['MeanSUI']):
-            ax[2].annotate(f'{txt:.2f}', (df_results_top15['Season'][i], df_results_top15['MeanSUI'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#4a0a13')
+        for i, txt in enumerate(df_results_top15['meanint']):
+            ax[2].annotate(f'{txt:.2f}', (df_results_top15['season'][i], df_results_top15['meanint'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#0328fc')
+        for i, txt in enumerate(df_results_top15['meansui']):
+            ax[2].annotate(f'{txt:.2f}', (df_results_top15['season'][i], df_results_top15['meansui'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#4a0a13')
 
 
     st.pyplot(fig)
 
 #------------------------------------------------------------Jahrgang Season No------------------------------------------------------------
-if selected == "Jahrgang Season No":
+if selected == "Year of birth and Season #":
 
   # User inputs
     col1, col2, col3, col4 = st.columns(4)
@@ -491,19 +493,20 @@ if selected == "Jahrgang Season No":
         disciplin = st.selectbox("Select Discipline:", options=['DH', 'SL', 'GS', 'SG', 'AC'])
 
     # Load the data
-    pickle_file_path = path_latest_fis_list_combinded
-    if os.path.exists(pickle_file_path):
-        with open(pickle_file_path, 'rb') as f:
-            combined_df = pickle.load(f)
-    else:
-        st.error(f"Pickle file not found at {pickle_file_path}")
+    combined_df = load_combined_data(path_latest_fis_list_combinded)
+    combined_df.columns = combined_df.columns.str.lower()
 
-    #st.write(combined_df)
-    combined_df['Listname'] = combined_df['Listname'].astype(str)
-    combined_df['Listyear'] = combined_df['Listname'].str[-4:]
-    combined_df['Listyear'] = combined_df['Listname'].replace("4/25", "2025")
+    combined_df['listname'] = combined_df['listname'].astype(str)
+    combined_df['listyear'] = (
+        combined_df['listname']
+        .str[-4:]
+        .replace("4/25", "2025")
+    )
+    combined_df['listyear'] = pd.to_numeric(combined_df['listyear'], errors='coerce').fillna(0).astype(int)
+    combined_df['birthyear'] = pd.to_numeric(combined_df['birthyear'], errors='coerce').fillna(0).astype(int)
+    combined_df['fisyearathlete'] = combined_df['listyear'] - combined_df['birthyear'] - 16
+    combined_df['fisyearathlete'] = combined_df['fisyearathlete'].clip(lower=0).astype(int)
 
-   
     df_results_top = collect_data_No(birthyear, FISYear, Gender, disciplin, combined_df)
 
 
@@ -514,23 +517,23 @@ if selected == "Jahrgang Season No":
 
     with col2:
        
-        df_results_top['Season'] = df_results_top['Season'].astype(str).str[2:]
-        df_results_top['Season'] = df_results_top['Season'].apply(lambda x: f"{int(x)-1}/{int(x)}" if x.isdigit() else x)
-        df_results_top['Season'] = "S" + df_results_top['Season'].astype(str) + " BY" + df_results_top['birthyear'].astype(str)
+        df_results_top['season'] = df_results_top['season'].astype(str).str[2:]
+        df_results_top['season'] = df_results_top['season'].apply(lambda x: f"{int(x)-1}/{int(x)}" if x.isdigit() else x)
+        df_results_top['season'] = "S" + df_results_top['season'].astype(str) + " BY" + df_results_top['birthyear'].astype(str)
 
         # Create bar plot
         fig, ax = plt.subplots(figsize=(10, 6))
         bar_width = 0.25
-        index = range(len(df_results_top['Season']))
-        bar1 = ax.bar(index, df_results_top['Top30'], bar_width, label='Top 30', color='#F5921B')
-        bar2 = ax.bar([i + bar_width for i in index], df_results_top['Top50'], bar_width, label='Top 50', color='#87BB62')
-        bar3 = ax.bar([i + 2 * bar_width for i in index], df_results_top['Top70'], bar_width, label='Top 70', color='#876FD4')
+        index = range(len(df_results_top['season']))
+        bar1 = ax.bar(index, df_results_top['top30'], bar_width, label='Top 30', color='#F5921B')
+        bar2 = ax.bar([i + bar_width for i in index], df_results_top['top50'], bar_width, label='Top 50', color='#87BB62')
+        bar3 = ax.bar([i + 2 * bar_width for i in index], df_results_top['top70'], bar_width, label='Top 70', color='#876FD4')
 
         ax.set_xlabel('Season and Birth Year')
         ax.set_ylabel('Count')
         ax.set_title('Number of SUI Athletes in Top 30, 50, and 70')
         ax.set_xticks([i + bar_width for i in index])
-        ax.set_xticklabels(df_results_top['Season'], rotation=45)
+        ax.set_xticklabels(df_results_top['season'], rotation=45)
         ax.legend()
         ax.grid(False)
 
@@ -552,7 +555,7 @@ if selected == "Jahrgang Season No":
 
 #------------------------------------------------------------Jahrgang Season Entw------------------------------------------------------------
 
-if selected == "Jahrgang Season Entw.":
+if selected == "Year of birth Development over Seasons":
 
 
     # User inputs
@@ -569,26 +572,24 @@ if selected == "Jahrgang Season Entw.":
 
     FISYear = 1
     # Load the data
-    pickle_file_path = path_latest_fis_list_combinded
-    if os.path.exists(pickle_file_path):
-        with open(pickle_file_path, 'rb') as f:
-            combined_df = pickle.load(f)
-    else:
-        st.error(f"Pickle file not found at {pickle_file_path}")
+    combined_df = load_combined_data(path_latest_fis_list_combinded)
+    combined_df.columns = combined_df.columns.str.lower()
 
-    #st.write(combined_df)
-    combined_df['Listname'] = combined_df['Listname'].astype(str)
-    combined_df['Listyear'] = combined_df['Listname'].str[-4:]
-    combined_df['Listyear'] = combined_df['Listname'].replace("4/25", "2025")
-
-    # Collect data for top 3, 10, and 15
-    #'SL', 'GS', 'SG'])
-    
+    combined_df['listname'] = combined_df['listname'].astype(str)
+    combined_df['listyear'] = (
+        combined_df['listname']
+        .str[-4:]
+        .replace("4/25", "2025")
+    )
+    combined_df['listyear'] = pd.to_numeric(combined_df['listyear'], errors='coerce').fillna(0).astype(int)
+    combined_df['birthyear'] = pd.to_numeric(combined_df['birthyear'], errors='coerce').fillna(0).astype(int)
+    combined_df['fisyearathlete'] = combined_df['listyear'] - combined_df['birthyear'] - 16
+    combined_df['fisyearathlete'] = combined_df['fisyearathlete'].clip(lower=0).astype(int)
 
     def format_season_column(df, birthyear_col='birthyear'):
-        df['Season'] = df['Season'].astype(str).str[2:]
-        df['Season'] = df['Season'].astype(int).apply(lambda x: f"{x-1}/{x}")
-        df['Season'] = "S" + df['Season'].astype(str) + " BY" + df[birthyear_col].astype(str)
+        df['season'] = df['season'].astype(str).str[2:]
+        df['season'] = df['season'].astype(int).apply(lambda x: f"{x-1}/{x}")
+        df['season'] = "S" + df['season'].astype(str) + " BY" + df[birthyear_col].astype(str)
         return df
     
     # Plotting
@@ -606,65 +607,66 @@ if selected == "Jahrgang Season Entw.":
         row = i // 2
         col = i % 2
         
-        ax[row, col].plot(df_results_top['Season'], df_results_top['MeanInt'], label='Int', marker='o', color= '#0328fc')
-        ax[row, col].plot(df_results_top['Season'], df_results_top['MeanSUI'], label='SUI', marker='o', color= '#4a0a13')
+        ax[row, col].plot(df_results_top['season'], df_results_top['meanint'], label='Int', marker='o', color= '#0328fc')
+        ax[row, col].plot(df_results_top['season'], df_results_top['meansui'], label='SUI', marker='o', color= '#4a0a13')
         ax[row, col].set_title('Top ' + str(top) + ' ' + str(disciplin))
         ax[row, col].invert_yaxis()
         ax[row, col].set_xlabel('Season')
         ax[row, col].set_ylabel('Weltranglistenposition')
         ax[row, col].legend()
         ax[row, col].grid(True)
-        ax[row, col].set_xticks(df_results_top['Season'])  # Add tick for every year
-        ax[row, col].set_xticklabels(df_results_top['Season'], rotation=45)
+        ax[row, col].set_xticks(df_results_top['season'])  # Add tick for every year
+        ax[row, col].set_xticklabels(df_results_top['season'], rotation=45)
 
         # Add value labels
-        for i, txt in enumerate(df_results_top['MeanInt']):
-            ax[row, col].annotate(f'{txt:.2f}', (df_results_top['Season'][i], df_results_top['MeanInt'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#0328fc')
-        for i, txt in enumerate(df_results_top['MeanSUI']):
-            ax[row, col].annotate(f'{txt:.2f}', (df_results_top['Season'][i], df_results_top['MeanSUI'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#4a0a13')
+        for i, txt in enumerate(df_results_top['meanint']):
+            ax[row, col].annotate(f'{txt:.2f}', (df_results_top['season'][i], df_results_top['meanint'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#0328fc')
+        for i, txt in enumerate(df_results_top['meansui']):
+            ax[row, col].annotate(f'{txt:.2f}', (df_results_top['season'][i], df_results_top['meansui'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#4a0a13')
     
     st.pyplot(fig)
 
 
-#------------------------------------------------------------TOP30 Entwicklung------------------------------------------------------------
+#------------------------------------------------------------Current Top Athletes - Development------------------------------------------------------------
 
-if selected == "TOP30 Entwicklung":
+if selected == "Current Top Athletes - Development":
     st.markdown("<h1 style='text-align:center;font-size:48px;'>Draft - WIP!</h1>", unsafe_allow_html=True)
     st.markdown("<h3><span style='color:blue;'>TopX</span><span style='color:#4a0a13;'> vs Swiss</span></h3>", unsafe_allow_html=True)
   
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
 
     with col1:
         Gender = st.selectbox("Select Gender:", options=['M', 'W'], index=0)
     with col2:
         top = st.number_input("Select Top X:", value=30, min_value=10, max_value=100)
+    with col3:
+         # Add a dropdown menu to select the discipline
+         disciplin = st.selectbox("Select Discipline:", options=['DH', 'SG', 'SL', 'GS'])
 
     # Load the data
     combined_df = load_combined_data(path_latest_fis_list_combinded)
+    combined_df.columns = combined_df.columns.str.lower()
     df_FIS_list = get_latest_fis_list()
 
 
-    # Filter the FIS list DataFrame to include only rows matching the selected gender
-    df_FIS_list = df_FIS_list[df_FIS_list["gender"].str.upper() == Gender.upper()]
+    # Filter the FIS list DataFrame to include only rows matching the selected gender and "nationcode" == "SUI"
+    df_FIS_list = df_FIS_list[(df_FIS_list["gender"].str.upper() == Gender.upper()) & (df_FIS_list["nationcode"] == "SUI")]
 
     ### Format:
-    # Ensure 'listname' is a string and extract the year from its last 4 characters
     combined_df['listname'] = combined_df['listname'].astype(str)
     combined_df['listyear'] = (
         combined_df['listname']
         .str[-4:]
         .replace("4/25", "2025")
     )
-    # Convert 'listyear' and 'birthyear' columns to integers, coercing errors to 0
     combined_df['listyear'] = pd.to_numeric(combined_df['listyear'], errors='coerce').fillna(0).astype(int)
     combined_df['birthyear'] = pd.to_numeric(combined_df['birthyear'], errors='coerce').fillna(0).astype(int)
-    # Calculate the athlete's FIS year (adjusted by starting age 16)
     combined_df['fisyearathlete'] = combined_df['listyear'] - combined_df['birthyear'] - 16
-    # Replace any negative values with 0
     combined_df['fisyearathlete'] = combined_df['fisyearathlete'].clip(lower=0).astype(int)
-    # Ensure competitorid is the same type in both DataFrames
     df_FIS_list['competitorid'] = df_FIS_list['competitorid'].astype(str)
     combined_df['competitorid'] = combined_df['competitorid'].astype(str)
+
+    combined_df.columns = combined_df.columns.str.lower()
 
     # Filter combined_df for "nationcode" == "SUI"
     combined_df_sui = combined_df[combined_df["nationcode"] == "SUI"]
@@ -672,9 +674,6 @@ if selected == "TOP30 Entwicklung":
 
     # Add a toggle switch for logarithmic scale
     use_log_scale = st.checkbox("Use Logarithmic Scale for Y-Axis", value=False)
-
-    # Add a dropdown menu to select the discipline
-    disciplin = st.selectbox("Select Discipline:", options=['DH', 'SG', 'SL', 'GS'])
 
     # Determine the column name for the selected discipline (e.g., 'dhpos', 'sgpos', etc.)
     col_name = f"{disciplin.lower()}pos"
@@ -702,19 +701,24 @@ if selected == "TOP30 Entwicklung":
     competitor_mapping_topX = competitors_topX.set_index("competitorid")["competitorname"].to_dict()
     competitor_mapping_sui = competitors_sui.set_index("competitorid")["competitorname"].to_dict()
 
-    # Dropdown menu for top X competitors
-    selected_competitor_topX = st.selectbox(
-        f"Select Athlete from Top {top} ({disciplin})",
-        list(competitor_mapping_topX.keys()),
-        format_func=lambda cid: competitor_mapping_topX[cid]
-    )
+    col1, col2 = st.columns(2)
+    with col1:
+        selected_competitor_topX = st.selectbox(
+            f"Select Athlete from Top {top} ({disciplin})",
+            list(competitor_mapping_topX.keys()),
+            format_func=lambda cid: competitor_mapping_topX[cid]
+        )
+    with col2:
+        selected_competitor_sui = st.selectbox(
+            f"Select SUI Athlete ({disciplin})",
+            list(competitor_mapping_sui.keys()),
+            format_func=lambda cid: competitor_mapping_sui[cid]
+        )
 
-    # Dropdown menu for all SUI competitors
-    selected_competitor_sui = st.selectbox(
-        f"Select SUI Athlete ({disciplin})",
-        list(competitor_mapping_sui.keys()),
-        format_func=lambda cid: competitor_mapping_sui[cid]
-    )
+    # Get competitor-specific data for SUI
+    comp_data_sui = combined_df_sui[
+        (combined_df_sui['competitorid'] == selected_competitor_sui)
+    ][['fisyearathlete', col_name]].rename(columns={'fisyearathlete': 'fisyear'}).sort_values(by='fisyear')
 
     # Calculate statistics for grouped data
     df_grouped = calculate_statistics(fisyear_pos, col_name)
@@ -724,11 +728,6 @@ if selected == "TOP30 Entwicklung":
 
     # Get competitor-specific data for top X
     comp_data_topX = fisyear_pos[fisyear_pos['competitorid'] == selected_competitor_topX].sort_values(by='fisyear')
-
-    # Get competitor-specific data for SUI
-    comp_data_sui = combined_df_sui[
-        (combined_df_sui['competitorid'] == selected_competitor_sui)
-    ][['fisyearathlete', col_name]].rename(columns={'fisyearathlete': 'fisyear'}).sort_values(by='fisyear')
 
     # Add traces to the plot for top X competitor
     fig = plot_fisyear_data(
