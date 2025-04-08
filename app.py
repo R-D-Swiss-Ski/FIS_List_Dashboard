@@ -672,85 +672,84 @@ if selected == "TOP30 Entwicklung":
     # Add a toggle switch for logarithmic scale
     use_log_scale = st.checkbox("Use Logarithmic Scale for Y-Axis", value=False)
 
-    # Iterate through disciplines and create plots
-    disciplines = ['DH', 'SG', 'SL', 'GS']
+    # Add a dropdown menu to select the discipline
+    disciplin = st.selectbox("Select Discipline:", options=['DH', 'SG', 'SL', 'GS'])
 
-    for disciplin in disciplines:
-        # Determine the column name for the current discipline (e.g., 'dhpos', 'sgpos', etc.)
-        col_name = f"{disciplin.lower()}pos"
+    # Determine the column name for the selected discipline (e.g., 'dhpos', 'sgpos', etc.)
+    col_name = f"{disciplin.lower()}pos"
 
-        # Get the top X athletes for this discipline from the FIS list DataFrame
-        df_topX = df_FIS_list.nsmallest(top, col_name)
-        df_topX = df_topX[["competitorid", "competitorname"]]
+    # Get the top X athletes for this discipline from the FIS list DataFrame
+    df_topX = df_FIS_list.nsmallest(top, col_name)
+    df_topX = df_topX[["competitorid", "competitorname"]]
 
-        # Create an empty DataFrame to collect each FIS year athlete's position for this discipline
-        fisyear_pos = pd.DataFrame(columns=['fisyear', 'competitorid', col_name, 'listyear'])
-        for fisyear in combined_df['fisyearathlete'].unique():
-            filtered_df = combined_df[
-                (combined_df['fisyearathlete'] == fisyear) &
-                (combined_df['competitorid'].isin(df_topX['competitorid']))
-            ]
-            filtered_df = filtered_df[['competitorid', col_name, 'listyear']].dropna(subset=[col_name])
-            for _, row in filtered_df.iterrows():
-                fisyear_pos.loc[len(fisyear_pos)] = [fisyear, row['competitorid'], row[col_name], row['listyear']]
+    # Create an empty DataFrame to collect each FIS year athlete's position for this discipline
+    fisyear_pos = pd.DataFrame(columns=['fisyear', 'competitorid', col_name, 'listyear'])
+    for fisyear in combined_df['fisyearathlete'].unique():
+        filtered_df = combined_df[
+            (combined_df['fisyearathlete'] == fisyear) &
+            (combined_df['competitorid'].isin(df_topX['competitorid']))
+        ]
+        filtered_df = filtered_df[['competitorid', col_name, 'listyear']].dropna(subset=[col_name])
+        for _, row in filtered_df.iterrows():
+            fisyear_pos.loc[len(fisyear_pos)] = [fisyear, row['competitorid'], row[col_name], row['listyear']]
 
-        # Combine competitors from df_topX and combined_df_sui for selection
-        competitors_topX = df_topX[['competitorid', 'competitorname']].drop_duplicates()
-        competitors_sui = combined_df_sui[['competitorid', 'competitorname']].drop_duplicates()
+    # Combine competitors from df_topX and combined_df_sui for selection
+    competitors_topX = df_topX[['competitorid', 'competitorname']].drop_duplicates()
+    competitors_sui = combined_df_sui[['competitorid', 'competitorname']].drop_duplicates()
 
-        # Create mappings for dropdown menus
-        competitor_mapping_topX = competitors_topX.set_index("competitorid")["competitorname"].to_dict()
-        competitor_mapping_sui = competitors_sui.set_index("competitorid")["competitorname"].to_dict()
+    # Create mappings for dropdown menus
+    competitor_mapping_topX = competitors_topX.set_index("competitorid")["competitorname"].to_dict()
+    competitor_mapping_sui = competitors_sui.set_index("competitorid")["competitorname"].to_dict()
 
-        # Dropdown menu for top X competitors
-        selected_competitor_topX = st.selectbox(
-            f"Select Athlete from Top {top} ({disciplin})",
-            list(competitor_mapping_topX.keys()),
-            format_func=lambda cid: competitor_mapping_topX[cid]
-        )
+    # Dropdown menu for top X competitors
+    selected_competitor_topX = st.selectbox(
+        f"Select Athlete from Top {top} ({disciplin})",
+        list(competitor_mapping_topX.keys()),
+        format_func=lambda cid: competitor_mapping_topX[cid]
+    )
 
-        # Dropdown menu for all SUI competitors
-        selected_competitor_sui = st.selectbox(
-            f"Select SUI Athlete ({disciplin})",
-            list(competitor_mapping_sui.keys()),
-            format_func=lambda cid: competitor_mapping_sui[cid]
-        )
+    # Dropdown menu for all SUI competitors
+    selected_competitor_sui = st.selectbox(
+        f"Select SUI Athlete ({disciplin})",
+        list(competitor_mapping_sui.keys()),
+        format_func=lambda cid: competitor_mapping_sui[cid]
+    )
 
-        # Calculate statistics for grouped data
-        df_grouped = calculate_statistics(fisyear_pos, col_name)
+    # Calculate statistics for grouped data
+    df_grouped = calculate_statistics(fisyear_pos, col_name)
 
-        # Create a line plot
-        fig = go.Figure()
+    # Create a line plot
+    fig = go.Figure()
 
-        # Get competitor-specific data for top X
-        comp_data_topX = fisyear_pos[fisyear_pos['competitorid'] == selected_competitor_topX].sort_values(by='fisyear')
+    # Get competitor-specific data for top X
+    comp_data_topX = fisyear_pos[fisyear_pos['competitorid'] == selected_competitor_topX].sort_values(by='fisyear')
 
-        # Get competitor-specific data for SUI
-        comp_data_sui = combined_df_sui[
-            (combined_df_sui['competitorid'] == selected_competitor_sui)
-        ][['fisyearathlete', col_name]].rename(columns={'fisyearathlete': 'fisyear'}).sort_values(by='fisyear')
+    # Get competitor-specific data for SUI
+    comp_data_sui = combined_df_sui[
+        (combined_df_sui['competitorid'] == selected_competitor_sui)
+    ][['fisyearathlete', col_name]].rename(columns={'fisyearathlete': 'fisyear'}).sort_values(by='fisyear')
 
-        # Add traces to the plot for top X competitor
-        fig = plot_fisyear_data(
-            fig=fig,
-            df_grouped=df_grouped,
-            comp_data=comp_data_topX,
-            competitor_name=competitor_mapping_topX[selected_competitor_topX],
-            col_name=col_name,
-            disciplin=disciplin,
-            use_log_scale=use_log_scale
-        )
+    # Add traces to the plot for top X competitor
+    fig = plot_fisyear_data(
+        fig=fig,
+        df_grouped=df_grouped,
+        comp_data=comp_data_topX,
+        competitor_name=competitor_mapping_topX[selected_competitor_topX],
+        col_name=col_name,
+        disciplin=disciplin,
+        use_log_scale=use_log_scale
+    )
 
-        # Add traces to the plot for SUI competitor
-        if not comp_data_sui.empty:
-            fig.add_trace(go.Scatter(
-                name=f"{competitor_mapping_sui[selected_competitor_sui]} (SUI)",
-                x=comp_data_sui['fisyear'],
-                y=comp_data_sui[col_name],
-                mode='lines+markers',
-                marker=dict(color='green', size=10),
-                line=dict(color='green', dash='dash')
-            ))
+    # Add traces to the plot for SUI competitor
+    if not comp_data_sui.empty:
+        fig.add_trace(go.Scatter(
+            name=f"{competitor_mapping_sui[selected_competitor_sui]} (SUI)",
+            x=comp_data_sui['fisyear'],
+            y=comp_data_sui[col_name],
+            mode='lines+markers',
+            marker=dict(color='green', size=10),
+            line=dict(color='green', dash='dash')
+        ))
 
-        # Display the plot
-        st.plotly_chart(fig)
+    # Display the plot
+    st.plotly_chart(fig)
