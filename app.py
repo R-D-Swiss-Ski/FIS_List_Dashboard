@@ -392,7 +392,7 @@ if selected == "Jahrgang Season":
     #st.write(combined_df)
     combined_df['Listname'] = combined_df['Listname'].astype(str)
     combined_df['Listyear'] = combined_df['Listname'].str[-4:]
-    combined_df['Listyear'] = combined_df['Listyear'].replace("4/25", "2025")
+    combined_df['Listyear'] = combined_df['Listname'].replace("4/25", "2025")
 
     # Collect data for top 3, 10, and 15
     df_results_top3 = collect_data(birthyear, FISYear, Gender, 3, disciplin, combined_df)
@@ -579,7 +579,7 @@ if selected == "Jahrgang Season Entw.":
     #st.write(combined_df)
     combined_df['Listname'] = combined_df['Listname'].astype(str)
     combined_df['Listyear'] = combined_df['Listname'].str[-4:]
-    combined_df['Listyear'] = combined_df['Listyear'].replace("4/25", "2025")
+    combined_df['Listyear'] = combined_df['Listname'].replace("4/25", "2025")
 
     # Collect data for top 3, 10, and 15
     #'SL', 'GS', 'SG'])
@@ -629,7 +629,7 @@ if selected == "Jahrgang Season Entw.":
 #------------------------------------------------------------TOP30 Entwicklung------------------------------------------------------------
 
 if selected == "TOP30 Entwicklung":
-    st.markdown("<h3 style='color:blue;'>International</h3><h3 style='color:#4a0a13; display:inline;'> vs Swiss</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color:blue;'>TopX</h3><h3 style='color:#4a0a13; display:inline;'> vs Swiss</h3>", unsafe_allow_html=True)
   
     col1, col2 = st.columns(2)
 
@@ -697,7 +697,6 @@ if selected == "TOP30 Entwicklung":
         # Combine competitors from df_topX and combined_df_sui for selection
         competitors_topX = df_topX[['competitorid', 'competitorname']].drop_duplicates()
         competitors_sui = combined_df_sui[['competitorid', 'competitorname']].drop_duplicates()
-        competitors_sui = competitors_sui[~competitors_sui['competitorid'].isin(competitors_topX['competitorid'])]
 
         # Create mappings for dropdown menus
         competitor_mapping_topX = competitors_topX.set_index("competitorid")["competitorname"].to_dict()
@@ -710,7 +709,7 @@ if selected == "TOP30 Entwicklung":
             format_func=lambda cid: competitor_mapping_topX[cid]
         )
 
-        # Dropdown menu for SUI competitors
+        # Dropdown menu for all SUI competitors
         selected_competitor_sui = st.selectbox(
             f"Select SUI Athlete ({disciplin})",
             list(competitor_mapping_sui.keys()),
