@@ -77,10 +77,3 @@ def collect_data_Entw(birthyear, FISYear, Gender, top, disciplin, combined_df):
         })
         season += 1
     return pd.DataFrame(data)
-
-
-def getTopXAthletes(df_FIS_List, Gender, disciplin, top):
-    df_FIS_List = df_FIS_List[(df_FIS_List['gender'] == Gender)]
-    df_topX = df_FIS_List.sort_values(by=str(disciplin) + 'pos', ascending=True)
-    df_topX = df_topX.head(top)
-    return df_topX

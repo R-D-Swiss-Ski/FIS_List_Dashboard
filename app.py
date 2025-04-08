@@ -6,7 +6,7 @@ import os
 import pickle
 import matplotlib.pyplot as plt
 from streamlit_option_menu import option_menu
-from utils import getMeanTopX_Int, getMeanTopX_SUI, collect_data, collect_data_No, collect_data_Entw, getTopXAthletes
+from utils import getMeanTopX_Int, getMeanTopX_SUI, collect_data, collect_data_No, collect_data_Entw
 
 
 ### PAGE CONFIGURATION ###
@@ -31,15 +31,15 @@ selected = option_menu(
                 "nav-link-selected": {"background-color": "rgba(0, 104, 201, 0.5)", "font-weight": "normal", "color": "white"},
             })
 
+
+### PATHS ###
 path_latest_fis_list_combinded = "data/fis_list_combined_01_04_25.pkl"
 path_latest_fis_list = "data/FIS-points-list-AL-2025-411.csv"
 
 ### HELPER FUNCTIONS ###
 def get_latest_fis_list():
-
     data = pd.read_csv(path_latest_fis_list) 
     data.columns = map(str.lower, data.columns)
-
     return data
 
 def load_combined_data(path_combinded):
@@ -103,6 +103,70 @@ def create_table(data, discipline, n=3, style=False):
     # Display the table in Streamlit
     return formated_dataframe(df_topX_display,n)
 
+
+def plot_fisyear_data(fig, df_grouped, comp_data, competitor_name, col_name, disciplin, use_log_scale):
+    """
+    Helper function to add traces to the plot for grouped data and competitor-specific data.
+    """
+    # Plot the mean line
+    fig.add_trace(go.Scatter(
+        name='Mean',
+        x=df_grouped['fisyear'],
+        y=df_grouped['mean'],
+        mode='lines+markers',
+        line=dict(color='blue')
+    ))
+    # Plot the upper bound (invisible, for fill)
+    fig.add_trace(go.Scatter(
+        name='Upper Bound',
+        x=df_grouped['fisyear'],
+        y=df_grouped['upper'],
+        mode='lines',
+        line=dict(width=0),
+        showlegend=False
+    ))
+    # Plot the lower bound and fill to the previous trace
+    fig.add_trace(go.Scatter(
+        name='Lower Bound',
+        x=df_grouped['fisyear'],
+        y=df_grouped['lower'],
+        mode='lines',
+        line=dict(width=0),
+        fill='tonexty',
+        fillcolor='rgba(0, 0, 255, 0.2)',
+        showlegend=False
+    ))
+
+    # Add competitor-specific data as a separate trace
+    if not comp_data.empty:
+        fig.add_trace(go.Scatter(
+            name=competitor_name,
+            x=comp_data['fisyear'],
+            y=comp_data[col_name],
+            mode='lines+markers',
+            marker=dict(color='red', size=10),
+            line=dict(color='red', dash='dash')
+        ))
+
+    # Update layout with the toggle for logarithmic scale
+    fig.update_layout(
+        title=f"{disciplin} Position vs FIS Year Athlete (with Std)",
+        xaxis_title='FIS Year Athlete',
+        yaxis_title=f"{disciplin} Position",
+        yaxis_autorange='reversed',
+        yaxis_type="log" if use_log_scale else "linear"
+    )
+    return fig
+
+
+def calculate_statistics(fisyear_pos, col_name):
+    """
+    Helper function to calculate mean, standard deviation, upper, and lower bounds.
+    """
+    df_grouped = fisyear_pos.groupby('fisyear')[col_name].agg(['mean', 'std']).reset_index()
+    df_grouped['upper'] = df_grouped['mean'] + df_grouped['std']
+    df_grouped['lower'] = df_grouped['mean'] - df_grouped['std']
+    return df_grouped
 
 
 #------------------------------------------------------------TOP 3------------------------------------------------------------
@@ -570,52 +634,95 @@ if selected == "TOP30 Entwicklung":
     col1, col2 = st.columns(2)
 
     with col1:
-        Gender = st.selectbox("Select Gender:", options=['M', 'W'])
+        Gender = st.selectbox("Select Gender:", options=['M', 'W'], index=0)
     with col2:
-        top = st.number_input("Select Top X:", value=3, min_value=3, max_value=50)
+        top = st.number_input("Select Top X:", value=30, min_value=10, max_value=50)
 
     # Load the data
     combined_df = load_combined_data(path_latest_fis_list_combinded)
-    combined_df.columns = map(str.lower, combined_df.columns)
     df_FIS_list = get_latest_fis_list()
-    df_FIS_list.columns = map(str.lower, df_FIS_list.columns)
 
-    # Ensure both data sources have matching key columns
-    st.write("combined_df columns:", combined_df.columns.tolist())
-    st.write("df_FIS_list columns:", df_FIS_list.columns.tolist())
 
+    # Filter the FIS list DataFrame to include only rows matching the selected gender
+    df_FIS_list = df_FIS_list[df_FIS_list["gender"].str.upper() == Gender.upper()]
+
+    ### Format:
+    # Ensure 'listname' is a string and extract the year from its last 4 characters
     combined_df['listname'] = combined_df['listname'].astype(str)
-    combined_df['listyear'] = combined_df['listname'].str[-4:]
-    combined_df['listyear'] = combined_df['listyear'].replace("4/25", "2025")
+    combined_df['listyear'] = (
+        combined_df['listname']
+        .str[-4:]
+        .replace("4/25", "2025")
+    )
+    # Convert 'listyear' and 'birthyear' columns to integers, coercing errors to 0
     combined_df['listyear'] = pd.to_numeric(combined_df['listyear'], errors='coerce').fillna(0).astype(int)
     combined_df['birthyear'] = pd.to_numeric(combined_df['birthyear'], errors='coerce').fillna(0).astype(int)
+    # Calculate the athlete's FIS year (adjusted by starting age 16)
     combined_df['fisyearathlete'] = combined_df['listyear'] - combined_df['birthyear'] - 16
-
+    # Replace any negative values with 0
+    combined_df['fisyearathlete'] = combined_df['fisyearathlete'].clip(lower=0).astype(int)
     # Ensure competitorid is the same type in both DataFrames
     df_FIS_list['competitorid'] = df_FIS_list['competitorid'].astype(str)
     combined_df['competitorid'] = combined_df['competitorid'].astype(str)
-    
-    # For each discipline, build the merged base DataFrame containing the position values for FIS years 1 to 11.
-    disciplines = ['dh', 'sg', 'sl', 'gs']
-    for disciplin in disciplines:
-        df_CurrentTopXAthletes = getTopXAthletes(df_FIS_list, Gender, disciplin, top)
-        st.write(f"Top {top} athletes for {disciplin}:", df_CurrentTopXAthletes)
-        if df_CurrentTopXAthletes.empty:
-            st.warning(f"No top athletes found for discipline {disciplin} and gender {Gender}. Check filtering.")
-        
-        # Initialize base DataFrame with competitor IDs from the top athletes
-        base = df_CurrentTopXAthletes[['competitorid']].copy()
 
-        for fisyear in range(1, 12):
-            # Filter the season data for the FIS year
-            df_season = combined_df[combined_df['fisyearathlete'] == fisyear].copy()
-            # Define the column name holding position values for the given discipline
-            pos_column = disciplin.lower() + 'pos'
-            # Filter rows that match our top competitor IDs and extract only the competitorid and position column
-            df_season_topX = df_season[df_season['competitorid'].isin(base['competitorid'])][['competitorid', pos_column]]
-            # Rename the position column to include the FIS year suffix
-            df_season_topX = df_season_topX.rename(columns={pos_column: f'pos{disciplin.lower()}{fisyear}'})
-            # Merge the actual position values into the base DataFrame
-            base = base.merge(df_season_topX, on='competitorid', how='left')
-        
-        st.write(f"Final merged data for {disciplin}:", base)
+    st.write(combined_df[(combined_df['fisyearathlete'] == 0)])
+
+    # Add a toggle switch for logarithmic scale
+    use_log_scale = st.checkbox("Use Logarithmic Scale for Y-Axis", value=True)
+
+    # Iterate through disciplines and create plots
+    disciplines = ['DH', 'SG', 'SL', 'GS']
+
+    for disciplin in disciplines:
+        # Determine the column name for the current discipline (e.g., 'dhpos', 'sgpos', etc.)
+        col_name = f"{disciplin.lower()}pos"
+
+        # Get the top X athletes for this discipline from the FIS list DataFrame
+        df_topX = df_FIS_list.nsmallest(top, col_name)
+        df_topX = df_topX[["competitorid", "competitorname"]]
+
+        # Create an empty DataFrame to collect each FIS year athlete's position for this discipline
+        fisyear_pos = pd.DataFrame(columns=['fisyear', 'competitorid', col_name])
+
+        # Iterate through unique FIS years and collect positions for athletes in df_topX
+        # Now including listyear into the collected DataFrame
+        fisyear_pos = pd.DataFrame(columns=['fisyear', 'competitorid', col_name, 'listyear'])
+        for fisyear in combined_df['fisyearathlete'].unique():
+            filtered_df = combined_df[
+            (combined_df['fisyearathlete'] == fisyear) &
+            (combined_df['competitorid'].isin(df_topX['competitorid']))
+            ]
+            filtered_df = filtered_df[['competitorid', col_name, 'listyear']].dropna(subset=[col_name])
+            for _, row in filtered_df.iterrows():
+                fisyear_pos.loc[len(fisyear_pos)] = [fisyear, row['competitorid'], row[col_name], row['listyear']]
+
+        # Competitor selection widget: let the user choose a competitor from df_topX
+        competitor_mapping = df_topX.set_index("competitorid")["competitorname"].to_dict()
+        selected_competitor = st.selectbox(
+            f"Select Competitor ({disciplin})",
+            list(competitor_mapping.keys()),
+            format_func=lambda cid: competitor_mapping[cid]
+        )
+
+        # Calculate statistics for grouped data
+        df_grouped = calculate_statistics(fisyear_pos, col_name)
+
+        # Create a line plot
+        fig = go.Figure()
+
+        # Get competitor-specific data
+        comp_data = fisyear_pos[fisyear_pos['competitorid'] == selected_competitor].sort_values(by='fisyear')
+
+        # Add traces to the plot
+        fig = plot_fisyear_data(
+            fig=fig,
+            df_grouped=df_grouped,
+            comp_data=comp_data,
+            competitor_name=competitor_mapping[selected_competitor],
+            col_name=col_name,
+            disciplin=disciplin,
+            use_log_scale=use_log_scale
+        )
+
+        # Display the plot
+        st.plotly_chart(fig)
