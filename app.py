@@ -670,7 +670,7 @@ if selected == "TOP30 Entwicklung":
     combined_df_sui = combined_df_sui[combined_df_sui["gender"].str.upper() == Gender.upper()]
 
     # Add a toggle switch for logarithmic scale
-    use_log_scale = st.checkbox("Use Logarithmic Scale for Y-Axis", value=True)
+    use_log_scale = st.checkbox("Use Logarithmic Scale for Y-Axis", value=False)
 
     # Iterate through disciplines and create plots
     disciplines = ['DH', 'SG', 'SL', 'GS']
