@@ -42,14 +42,14 @@ def get_latest_fis_list():
     data.columns = map(str.lower, data.columns)
     return data
 
-def load_combined_data(path_combinded):
-    if os.path.exists(path_combinded):
-        with open(path_combinded, 'rb') as f:
+def load_combined_data(path_latest_fis_list_combinded):
+    if os.path.exists(path_latest_fis_list_combinded):
+        with open(path_latest_fis_list_combinded, 'rb') as f:
             combined_df = pickle.load(f)
         combined_df.columns = map(str.lower, combined_df.columns)
         return combined_df
     else:
-        st.error(f"Pickle file not found at {path_combinded}")
+        st.error(f"Pickle file not found at {path_latest_fis_list_combinded}")
         return None
 
 def highlight_suiss(val):
