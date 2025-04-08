@@ -21,8 +21,8 @@ st.set_page_config(
 st.title("FIS Points List Dashboard")
 
 selected = option_menu(
-            None, [ "Top 3", "Top 20", "Jahrgang Season", "Jahrgang Season No", "Jahrgang Season Entw.", "FIS Year Compare"],
-            icons=["trophy-fill", "trophy","archive", "archive-fill","rocket"],
+            None, [ "Top 3", "Top 20", "Jahrgang Season", "Jahrgang Season No", "Jahrgang Season Entw.", "TOP30 Entwicklung"],
+            icons=["trophy-fill", "trophy","clipboard2-pulse-fill", "receipt","rocket","speedometer2"],
             orientation= "horizontal",
             styles={
                 "container": {"padding": "0!important"},
@@ -562,11 +562,9 @@ if selected == "Jahrgang Season Entw.":
     st.pyplot(fig)
 
 
-#------------------------------------------------------------FIS Year Compare------------------------------------------------------------
+#------------------------------------------------------------TOP30 Entwicklung------------------------------------------------------------
 
-#------------------------------------------------------------FIS Year Compare------------------------------------------------------------
-
-if selected == "FIS Year Compare":
+if selected == "TOP30 Entwicklung":
     st.markdown("<h3 style='color:blue;'>International</h3><h3 style='color:#4a0a13; display:inline;'> vs Swiss</h3>", unsafe_allow_html=True)
   
     col1, col2 = st.columns(2)
