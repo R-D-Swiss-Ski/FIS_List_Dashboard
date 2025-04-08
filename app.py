@@ -629,7 +629,8 @@ if selected == "Jahrgang Season Entw.":
 #------------------------------------------------------------TOP30 Entwicklung------------------------------------------------------------
 
 if selected == "TOP30 Entwicklung":
-    st.markdown("<h3 style='color:blue;'>TopX</h3><h3 style='color:#4a0a13; display:inline;'> vs Swiss</h3>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align:center;font-size:48px;'>Draft - WIP!</h1>", unsafe_allow_html=True)
+    st.markdown("<h3><span style='color:blue;'>TopX</span><span style='color:#4a0a13;'> vs Swiss</span></h3>", unsafe_allow_html=True)
   
     col1, col2 = st.columns(2)
 
