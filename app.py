@@ -752,9 +752,6 @@ if selected == "Current Top Athletes - Development":
 #------------------------------------------------------------Athlete - All Disciplines - Development------------------------------------------------------------
 if selected == "Athlete - All Disciplines - Development":
     st.markdown("<h3><span style='color:blue;'>TopX</span><span style='color:#4a0a13;'> vs Swiss</span></h3>", unsafe_allow_html=True)
-  
-    image_path = "PHOTO-2025-02-10-12-34-45.jpg"  # Update the path to your image file
-    st.image(image_path, caption="JPG Image")
 
     col1, col2 = st.columns(2)
     with col1:
@@ -810,15 +807,14 @@ if selected == "Athlete - All Disciplines - Development":
     # Define a color mapping for disciplines
     color_map = {
         'DH': {'line': 'rgb(255, 204, 0)', 'fill': 'rgba(255, 204, 0, 0.2)'},
-        'GS': {'line': 'green', 'fill': 'rgba(0,128,0,0.2)'},
+        'SG': {'line': 'green', 'fill': 'rgba(0,128,0,0.2)'},
         'SL': {'line': 'blue', 'fill': 'rgba(0,0,255,0.2)'},
-        'SG': {'line': 'rgb(128, 0, 255)', 'fill': 'rgba(128, 0, 255, 0.2)'},
+        'GS': {'line': 'rgb(235, 52, 201)', 'fill': 'rgba(235, 52, 201, 0.2)'},
     }
 
     # ... inside the for loop for individual discipline plots ...
     for idx, disciplin in enumerate(disciplines):
         with grid[idx]:
-            st.markdown(f"### {disciplin} Position")
             col_name = f"{disciplin.lower()}pos"
             # Get the top X athletes for this discipline
             df_topX = df_FIS_list.nsmallest(top, col_name)[["competitorid", "competitorname"]]
@@ -852,7 +848,7 @@ if selected == "Athlete - All Disciplines - Development":
                 x=df_grouped['fisyear'],
                 y=df_grouped['mean'],
                 mode='lines+markers',
-                line=dict(color=line_color)
+                line=dict(color=line_color, width=4)
             ))
             fig.add_trace(go.Scatter(
                 name='Upper Bound',
@@ -915,7 +911,7 @@ if selected == "Athlete - All Disciplines - Development":
             x=df_grouped['fisyear'],
             y=df_grouped['mean'],
             mode='lines+markers',
-            line=dict(color=line_color)
+            line=dict(color=line_color,width=2)
         ))
         
         # Get competitor-specific data for SUI for the current discipline
