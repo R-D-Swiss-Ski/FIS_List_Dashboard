@@ -740,8 +740,8 @@ if selected == "Current Top Athletes - Development":
             x=comp_data_sui['fisyear'],
             y=comp_data_sui[col_name],
             mode='lines+markers',
-            marker=dict(color='green', size=10),
-            line=dict(color='green', dash='dash')
+            marker=dict(color='gray', size=10),
+            line=dict(color='gray', dash='dash')
         ))
 
     st.plotly_chart(fig)
@@ -752,6 +752,9 @@ if selected == "Athlete - All Disciplines - Development":
     st.markdown("<h1 style='text-align:center;font-size:48px;'>Draft - WIP!</h1>", unsafe_allow_html=True)
     st.markdown("<h3><span style='color:blue;'>TopX</span><span style='color:#4a0a13;'> vs Swiss</span></h3>", unsafe_allow_html=True)
   
+    image_path = "PHOTO-2025-02-10-12-34-45.jpg"  # Update the path to your image file
+    st.image(image_path, caption="JPG Image")
+
     col1, col2 = st.columns(2)
     with col1:
         Gender = st.selectbox("Select Gender:", options=['M', 'W'], index=0)
@@ -874,8 +877,8 @@ if selected == "Athlete - All Disciplines - Development":
                     x=comp_data_sui['fisyear'],
                     y=comp_data_sui[col_name],
                     mode='lines+markers',
-                    marker=dict(color='green', size=10),
-                    line=dict(color='green', dash='dash')
+                    marker=dict(color='gray', size=10),
+                    line=dict(color='gray', dash='dash')
                 ))
             fig.update_layout(
                 title=f"{disciplin} Position vs FIS Year",
