@@ -37,11 +37,13 @@ path_latest_fis_list_combinded = "data/fis_list_combined_01_04_25.pkl"
 path_latest_fis_list = "data/FIS-points-list-AL-2025-411.csv"
 
 ### HELPER FUNCTIONS ###
+@st.cache_data(show_spinner=False)
 def get_latest_fis_list():
     data = pd.read_csv(path_latest_fis_list) 
     data.columns = map(str.lower, data.columns)
     return data
 
+@st.cache_data(show_spinner=False)
 def load_combined_data(path_latest_fis_list_combinded):
     if os.path.exists(path_latest_fis_list_combinded):
         with open(path_latest_fis_list_combinded, 'rb') as f:
@@ -844,7 +846,7 @@ if selected == "Athlete - All Disciplines - Development":
                 line_color = 'blue'
                 fill_color = 'rgba(0,0,255,0.2)'
             
-            # Create a line plot
+            # Create a line plot with normal (non-inverted) y-axis
             fig = go.Figure()
             fig.add_trace(go.Scatter(
                 name='Mean',
@@ -884,8 +886,7 @@ if selected == "Athlete - All Disciplines - Development":
                 title=f"{disciplin} Position vs FIS Year",
                 xaxis_title='FIS Year Athlete',
                 yaxis_title=f"{disciplin} Position",
-                yaxis_autorange='reversed',
-                yaxis_type="linear"
+                yaxis_type="linear"  # y-axis is now normal (non-inverted)
             )
             st.plotly_chart(fig)
 
@@ -938,7 +939,7 @@ if selected == "Athlete - All Disciplines - Development":
         title="Combined Mean Position vs FIS Year (All Disciplines)",
         xaxis_title="FIS Year Athlete",
         yaxis_title="Position",
-        yaxis_autorange="reversed"
+        yaxis_type="linear"  # y-axis is normal in the combined plot
     )
 
     st.plotly_chart(fig_combined)
