@@ -751,7 +751,6 @@ if selected == "Current Top Athletes - Development":
 
 #------------------------------------------------------------Athlete - All Disciplines - Development------------------------------------------------------------
 if selected == "Athlete - All Disciplines - Development":
-    st.markdown("<h1 style='text-align:center;font-size:48px;'>Draft - WIP!</h1>", unsafe_allow_html=True)
     st.markdown("<h3><span style='color:blue;'>TopX</span><span style='color:#4a0a13;'> vs Swiss</span></h3>", unsafe_allow_html=True)
   
     image_path = "PHOTO-2025-02-10-12-34-45.jpg"  # Update the path to your image file
