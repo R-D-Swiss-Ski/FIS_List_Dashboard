@@ -803,6 +803,15 @@ if selected == "Athlete - All Disciplines - Development":
     row2_col1, row2_col2 = st.columns(2)
     grid = [row1_col1, row1_col2, row2_col1, row2_col2]
 
+    # Define a color mapping for disciplines
+    color_map = {
+        'DH': {'line': 'rgb(255, 204, 0)', 'fill': 'rgba(255, 204, 0, 0.2)'},
+        'GS': {'line': 'green', 'fill': 'rgba(0,128,0,0.2)'},
+        'SL': {'line': 'blue', 'fill': 'rgba(0,0,255,0.2)'},
+        'SG': {'line': 'rgb(128, 0, 255)', 'fill': 'rgba(128, 0, 255, 0.2)'},
+    }
+
+    # ... inside the for loop for individual discipline plots ...
     for idx, disciplin in enumerate(disciplines):
         with grid[idx]:
             st.markdown(f"### {disciplin} Position")
@@ -810,23 +819,28 @@ if selected == "Athlete - All Disciplines - Development":
             # Get the top X athletes for this discipline
             df_topX = df_FIS_list.nsmallest(top, col_name)[["competitorid", "competitorname"]]
             
-            # --- Performance improvement ---
-            # Instead of iterating over each unique fisyear then each row, use vectorized filtering.
-            # Filter combined_df to include only relevant competitorids and drop rows without a valid position.
+            # Performance improvement: vectorized filtering
             fisyear_pos = combined_df[
                 combined_df['competitorid'].isin(df_topX['competitorid'])
             ][['fisyearathlete', 'competitorid', col_name, 'listyear']].dropna(subset=[col_name]).copy()
-            # Rename column for consistency with calculate_statistics()
             fisyear_pos.rename(columns={'fisyearathlete':'fisyear'}, inplace=True)
-            # --- End performance improvement ---
-
+            
             # Get competitor-specific data for SUI for the current discipline
             comp_data_sui = combined_df_sui[
                 (combined_df_sui['competitorid'] == selected_competitor_sui)
             ][['fisyearathlete', col_name]].rename(columns={'fisyearathlete': 'fisyear'}).sort_values(by='fisyear')
-
+            
             # Calculate statistics for grouped data
             df_grouped = calculate_statistics(fisyear_pos, col_name)
+            
+            # Determine the color based on discipline
+            if disciplin in color_map:
+                line_color = color_map[disciplin]['line']
+                fill_color = color_map[disciplin]['fill']
+            else:
+                line_color = 'blue'
+                fill_color = 'rgba(0,0,255,0.2)'
+            
             # Create a line plot
             fig = go.Figure()
             fig.add_trace(go.Scatter(
@@ -834,14 +848,14 @@ if selected == "Athlete - All Disciplines - Development":
                 x=df_grouped['fisyear'],
                 y=df_grouped['mean'],
                 mode='lines+markers',
-                line=dict(color='blue')
+                line=dict(color=line_color)
             ))
             fig.add_trace(go.Scatter(
                 name='Upper Bound',
                 x=df_grouped['fisyear'],
                 y=df_grouped['upper'],
                 mode='lines',
-                line=dict(width=0),
+                line=dict(width=0, color=line_color),
                 showlegend=False
             ))
             fig.add_trace(go.Scatter(
@@ -851,7 +865,7 @@ if selected == "Athlete - All Disciplines - Development":
                 mode='lines',
                 line=dict(width=0),
                 fill='tonexty',
-                fillcolor='rgba(0, 0, 255, 0.2)',
+                fillcolor=fill_color,
                 showlegend=False
             ))
             if not comp_data_sui.empty:
@@ -871,28 +885,51 @@ if selected == "Athlete - All Disciplines - Development":
                 yaxis_type="linear"
             )
             st.plotly_chart(fig)
-        
+
     # --- Combined Plot (All Disciplines Mean Only) ---
     fig_combined = go.Figure()
-    disciplines = ['DH', 'SG', 'SL', 'GS']
-    for disciplin in disciplines:
+    for disciplin in ['DH', 'SG', 'SL', 'GS']:
         col_name = f"{disciplin.lower()}pos"
         # Get the top X athletes for this discipline
         df_topX = df_FIS_list.nsmallest(top, col_name)[["competitorid", "competitorname"]]
-        # Vectorized filtering to get FIS year data for the top competitor IDs
         fisyear_pos = combined_df[
             combined_df['competitorid'].isin(df_topX['competitorid'])
         ][['fisyearathlete', 'competitorid', col_name, 'listyear']].dropna(subset=[col_name]).copy()
         fisyear_pos.rename(columns={'fisyearathlete': 'fisyear'}, inplace=True)
-        # Calculate grouped statistics (mean only used here)
+        
+        # Calculate grouped statistics (mean only)
         df_grouped = calculate_statistics(fisyear_pos, col_name)
+        
+        # Determine the color based on discipline
+        if disciplin in color_map:
+            line_color = color_map[disciplin]['line']
+        else:
+            line_color = 'blue'
+        
         # Add trace for the discipline mean
         fig_combined.add_trace(go.Scatter(
             name=f"{disciplin} Mean",
             x=df_grouped['fisyear'],
             y=df_grouped['mean'],
-            mode='lines+markers'
+            mode='lines+markers',
+            line=dict(color=line_color)
         ))
+        
+        # Get competitor-specific data for SUI for the current discipline
+        comp_data_sui = combined_df_sui[
+            combined_df_sui['competitorid'] == selected_competitor_sui
+        ][['fisyearathlete', col_name]].rename(columns={'fisyearathlete': 'fisyear'}).sort_values(by='fisyear')
+        
+        # Add trace for SUI competitor if data exists, with dashed line
+        if not comp_data_sui.empty:
+            fig_combined.add_trace(go.Scatter(
+                name=f"{disciplin} {competitor_mapping_sui[selected_competitor_sui]} (SUI)",
+                x=comp_data_sui['fisyear'],
+                y=comp_data_sui[col_name],
+                mode='lines+markers',
+                marker=dict(size=10),
+                line=dict(color=line_color, dash='dash')
+            ))
 
     fig_combined.update_layout(
         title="Combined Mean Position vs FIS Year (All Disciplines)",
