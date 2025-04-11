@@ -757,7 +757,7 @@ if selected == "Athlete - All Disciplines - Development":
     with col1:
         Gender = st.selectbox("Select Gender:", options=['M', 'W'], index=0)
     with col2:
-        top = st.number_input("Select Top X:", value=30, min_value=10, max_value=100)
+        top = st.number_input("Select Top X International:", value=30, min_value=10, max_value=100)
 
     # Load the data
     combined_df = load_combined_data(path_latest_fis_list_combinded)
@@ -793,10 +793,20 @@ if selected == "Athlete - All Disciplines - Development":
     # Prepare competitor selection: only SUI athlete selection is needed (applies to all disciplines)
     competitors_sui = combined_df_sui[['competitorid', 'competitorname']].drop_duplicates()
     competitor_mapping_sui = competitors_sui.set_index("competitorid")["competitorname"].to_dict()
+    default_index = list(competitor_mapping_sui.values()).index("ODERMATT Marco") if "ODERMATT Marco" in competitor_mapping_sui.values() else 0
     selected_competitor_sui = st.selectbox(
         "Select SUI Athlete",
         list(competitor_mapping_sui.keys()),
+        index=default_index,
         format_func=lambda cid: competitor_mapping_sui[cid]
+    )
+    default_index = list(competitor_mapping_sui.values()).index("VON ALLMEN Franjo") if "VON ALLMEN Franjo" in competitor_mapping_sui.values() else 0
+    selected_competitor_sui2 = st.selectbox(
+        "Select another SUI Athlete",
+        list(competitor_mapping_sui.keys()),
+        format_func=lambda cid: competitor_mapping_sui[cid],
+        index=default_index,
+        key="second_competitor"
     )
 
     # Define disciplines and create a 2x2 grid for graphs
@@ -828,7 +838,7 @@ if selected == "Athlete - All Disciplines - Development":
             # Rename athleteage to 'fisyear' so that helper functions work as expected
             age_pos.rename(columns={'athleteage':'fisyear'}, inplace=True)
             
-            # Get competitor-specific data for SUI for the current discipline using athleteage
+            # Get competitor-specific data for first SUI athlete using athleteage
             comp_data_sui = combined_df_sui[
                 (combined_df_sui['competitorid'] == selected_competitor_sui)
             ][['athleteage', col_name]].rename(columns={'athleteage': 'fisyear'}).sort_values(by='fisyear')
@@ -871,6 +881,7 @@ if selected == "Athlete - All Disciplines - Development":
                 fillcolor=fill_color,
                 showlegend=False
             ))
+            # Add trace for first SUI competitor (dashed lines)
             if not comp_data_sui.empty:
                 fig.add_trace(go.Scatter(
                     name=f"{competitor_mapping_sui[selected_competitor_sui]} (SUI)",
@@ -880,6 +891,21 @@ if selected == "Athlete - All Disciplines - Development":
                     marker=dict(color='gray', size=10),
                     line=dict(color='gray', dash='dash')
                 ))
+            # Get competitor-specific data for second SUI athlete using athleteage
+            comp_data_sui2 = combined_df_sui[
+                (combined_df_sui['competitorid'] == selected_competitor_sui2)
+            ][['athleteage', col_name]].rename(columns={'athleteage': 'fisyear'}).sort_values(by='fisyear')
+            # Add trace for second SUI competitor (dotted lines)
+            if not comp_data_sui2.empty:
+                fig.add_trace(go.Scatter(
+                    name=f"{competitor_mapping_sui[selected_competitor_sui2]} (SUI 2)",
+                    x=comp_data_sui2['fisyear'],
+                    y=comp_data_sui2[col_name],
+                    mode='lines+markers',
+                    marker=dict(color='rgb(40,40,40)', size=10, symbol='square'),
+                    line=dict(color='rgb(40,40,40)', dash='dot')
+                ))
+            
             fig.update_layout(
                 title=f"{disciplin} Position vs Athlete Age",
                 xaxis_title='Athlete Age',
@@ -931,6 +957,22 @@ if selected == "Athlete - All Disciplines - Development":
                 mode='lines+markers',
                 marker=dict(size=10),
                 line=dict(color=line_color, dash='dash')
+            ))
+
+        # Get competitor-specific data for second SUI athlete, using athleteage
+        comp_data_sui2 = combined_df_sui[
+            combined_df_sui['competitorid'] == selected_competitor_sui2
+        ][['athleteage', col_name]].rename(columns={'athleteage': 'fisyear'}).sort_values(by='fisyear')
+
+        # Add trace for second SUI competitor with dotted line
+        if not comp_data_sui2.empty:
+            fig_combined.add_trace(go.Scatter(
+                name=f"{disciplin} {competitor_mapping_sui[selected_competitor_sui2]} (SUI 2)",
+                x=comp_data_sui2['fisyear'],
+                y=comp_data_sui2[col_name],
+                mode='lines+markers',
+                marker=dict(size=10, symbol='square'),
+                line=dict(dash='dot')
             ))
 
     fig_combined.update_layout(
