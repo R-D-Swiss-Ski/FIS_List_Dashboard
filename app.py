@@ -402,7 +402,7 @@ if selected == "Year of birth over seasons":
     # Collect data for top 3, 10, and 15
     df_results_top3 = collect_data(birthyear, FISYear, Gender, 3, disciplin, combined_df)
     df_results_top10 = collect_data(birthyear, FISYear, Gender, 10, disciplin, combined_df)
-    df_results_top15 = collect_data(birthyear, FISYear, Gender, 15, disciplin, combined_df)
+    df_results_top15 = collect_data(birthyear, FISYear, 15, disciplin, combined_df)
 
     def format_season_column(df, birthyear_col='birthyear'):
         df['season'] = df['season'].astype(str).str[2:]
@@ -764,7 +764,7 @@ if selected == "Athlete - All Disciplines - Development":
     combined_df.columns = combined_df.columns.str.lower()
     df_FIS_list = get_latest_fis_list()
 
-    # Filter the FIS list DataFrame to include only rows matching the selected gender and "nationcode" == "SUI"
+    # Filter the FIS list DataFrame to include only rows matching the selected gender and nationcode "SUI"
     df_FIS_list = df_FIS_list[
         (df_FIS_list["gender"].str.upper() == Gender.upper()) & 
         (df_FIS_list["nationcode"] == "SUI")
@@ -779,8 +779,9 @@ if selected == "Athlete - All Disciplines - Development":
     )
     combined_df['listyear'] = pd.to_numeric(combined_df['listyear'], errors='coerce').fillna(0).astype(int)
     combined_df['birthyear'] = pd.to_numeric(combined_df['birthyear'], errors='coerce').fillna(0).astype(int)
-    combined_df['fisyearathlete'] = combined_df['listyear'] - combined_df['birthyear'] - 16
-    combined_df['fisyearathlete'] = combined_df['fisyearathlete'].clip(lower=0).astype(int)
+    # Instead of using 'fisyearathlete', use 'athleteage'
+    combined_df['athleteage'] = combined_df['listyear'] - combined_df['birthyear']
+    combined_df['athleteage'] = combined_df['athleteage'].clip(lower=0).astype(int)
     df_FIS_list['competitorid'] = df_FIS_list['competitorid'].astype(str)
     combined_df['competitorid'] = combined_df['competitorid'].astype(str)
     combined_df.columns = combined_df.columns.str.lower()
@@ -815,23 +816,25 @@ if selected == "Athlete - All Disciplines - Development":
     # ... inside the for loop for individual discipline plots ...
     for idx, disciplin in enumerate(disciplines):
         with grid[idx]:
+            st.markdown(f"### {disciplin} Position")
             col_name = f"{disciplin.lower()}pos"
             # Get the top X athletes for this discipline
             df_topX = df_FIS_list.nsmallest(top, col_name)[["competitorid", "competitorname"]]
             
-            # Performance improvement: vectorized filtering
-            fisyear_pos = combined_df[
+            # Use athleteage (instead of fisyearathlete) for the x-axis:
+            age_pos = combined_df[
                 combined_df['competitorid'].isin(df_topX['competitorid'])
-            ][['fisyearathlete', 'competitorid', col_name, 'listyear']].dropna(subset=[col_name]).copy()
-            fisyear_pos.rename(columns={'fisyearathlete':'fisyear'}, inplace=True)
+            ][['athleteage', 'competitorid', col_name, 'listyear']].dropna(subset=[col_name]).copy()
+            # Rename athleteage to 'fisyear' so that helper functions work as expected
+            age_pos.rename(columns={'athleteage':'fisyear'}, inplace=True)
             
-            # Get competitor-specific data for SUI for the current discipline
+            # Get competitor-specific data for SUI for the current discipline using athleteage
             comp_data_sui = combined_df_sui[
                 (combined_df_sui['competitorid'] == selected_competitor_sui)
-            ][['fisyearathlete', col_name]].rename(columns={'fisyearathlete': 'fisyear'}).sort_values(by='fisyear')
+            ][['athleteage', col_name]].rename(columns={'athleteage': 'fisyear'}).sort_values(by='fisyear')
             
-            # Calculate statistics for grouped data
-            df_grouped = calculate_statistics(fisyear_pos, col_name)
+            # Calculate statistics for grouped data (grouping on the new 'fisyear' column which is athleteage)
+            df_grouped = calculate_statistics(age_pos, col_name)
             
             # Determine the color based on discipline
             if disciplin in color_map:
@@ -841,7 +844,7 @@ if selected == "Athlete - All Disciplines - Development":
                 line_color = 'blue'
                 fill_color = 'rgba(0,0,255,0.2)'
             
-            # Create a line plot with normal (non-inverted) y-axis
+            # Create a line plot with a normal (non-inverted) y-axis using athleteage for the x-axis
             fig = go.Figure()
             fig.add_trace(go.Scatter(
                 name='Mean',
@@ -878,10 +881,10 @@ if selected == "Athlete - All Disciplines - Development":
                     line=dict(color='gray', dash='dash')
                 ))
             fig.update_layout(
-                title=f"{disciplin} Position vs FIS Year",
-                xaxis_title='FIS Year Athlete',
+                title=f"{disciplin} Position vs Athlete Age",
+                xaxis_title='Athlete Age',
                 yaxis_title=f"{disciplin} Position",
-                yaxis_type="linear"  # y-axis is now normal (non-inverted)
+                yaxis_type="linear"
             )
             st.plotly_chart(fig)
 
@@ -891,13 +894,13 @@ if selected == "Athlete - All Disciplines - Development":
         col_name = f"{disciplin.lower()}pos"
         # Get the top X athletes for this discipline
         df_topX = df_FIS_list.nsmallest(top, col_name)[["competitorid", "competitorname"]]
-        fisyear_pos = combined_df[
+        age_pos = combined_df[
             combined_df['competitorid'].isin(df_topX['competitorid'])
-        ][['fisyearathlete', 'competitorid', col_name, 'listyear']].dropna(subset=[col_name]).copy()
-        fisyear_pos.rename(columns={'fisyearathlete': 'fisyear'}, inplace=True)
+        ][['athleteage', 'competitorid', col_name, 'listyear']].dropna(subset=[col_name]).copy()
+        age_pos.rename(columns={'athleteage': 'fisyear'}, inplace=True)
         
         # Calculate grouped statistics (mean only)
-        df_grouped = calculate_statistics(fisyear_pos, col_name)
+        df_grouped = calculate_statistics(age_pos, col_name)
         
         # Determine the color based on discipline
         if disciplin in color_map:
@@ -905,19 +908,19 @@ if selected == "Athlete - All Disciplines - Development":
         else:
             line_color = 'blue'
         
-        # Add trace for the discipline mean
+        # Add trace for the discipline mean using athlete age for the x-axis
         fig_combined.add_trace(go.Scatter(
             name=f"{disciplin} Mean",
             x=df_grouped['fisyear'],
             y=df_grouped['mean'],
             mode='lines+markers',
-            line=dict(color=line_color,width=2)
+            line=dict(color=line_color, width=2)
         ))
         
-        # Get competitor-specific data for SUI for the current discipline
+        # Get competitor-specific data for SUI for the current discipline, using athleteage
         comp_data_sui = combined_df_sui[
             combined_df_sui['competitorid'] == selected_competitor_sui
-        ][['fisyearathlete', col_name]].rename(columns={'fisyearathlete': 'fisyear'}).sort_values(by='fisyear')
+        ][['athleteage', col_name]].rename(columns={'athleteage': 'fisyear'}).sort_values(by='fisyear')
         
         # Add trace for SUI competitor if data exists, with dashed line
         if not comp_data_sui.empty:
@@ -931,10 +934,10 @@ if selected == "Athlete - All Disciplines - Development":
             ))
 
     fig_combined.update_layout(
-        title="Combined Mean Position vs FIS Year (All Disciplines)",
-        xaxis_title="FIS Year Athlete",
+        title="Combined Mean Position vs Athlete Age (All Disciplines)",
+        xaxis_title="Athlete Age",
         yaxis_title="Position",
-        yaxis_type="linear"  # y-axis is normal in the combined plot
+        yaxis_type="linear"
     )
 
     st.plotly_chart(fig_combined)
