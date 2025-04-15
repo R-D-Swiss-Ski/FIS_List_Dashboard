@@ -19,6 +19,7 @@ st.set_page_config(
 ### PAGE CONTENT ###
 
 st.title("FIS Points List Dashboard")
+st.header("FIS Pointlist 15.4.2025")
 
 selected = option_menu(
             None, [ "Top 3", "Top 20", "Year of birth over seasons", "Year of birth and Season #", "Year of birth Development over Seasons", "Current Top Athletes - Development", "Athlete - All Disciplines - Development"],
@@ -33,8 +34,8 @@ selected = option_menu(
 
 
 ### PATHS ###
-path_latest_fis_list_combinded = "data/fis_list_combined_01_04_25.pkl"
-path_latest_fis_list = "data/FIS-points-list-AL-2025-411.csv"
+path_latest_fis_list_combinded = "data/fis_list_combined_15_04_25.pkl"
+path_latest_fis_list = "data/FIS-points-list-AL-2025-412.csv"
 
 ### HELPER FUNCTIONS ###
 @st.cache_data(show_spinner=False)
@@ -175,7 +176,6 @@ def calculate_statistics(fisyear_pos, col_name):
 #------------------------------------------------------------TOP 3------------------------------------------------------------
 if selected == "Top 3":
 
-    st.title("FIS List 20th of 2025 (411 - 01-04-2025)")
     # Load the data (Change to read from pickle for easier solution)
     data = get_latest_fis_list()
 
@@ -301,7 +301,6 @@ if selected == "Top 3":
 
 #------------------------------------------------------------TOP 20------------------------------------------------------------
 if selected == "Top 20":
-
     data = get_latest_fis_list()
 
     # Sort the data so the most recent year is at index 0 
@@ -633,7 +632,6 @@ if selected == "Year of birth Development over Seasons":
 #------------------------------------------------------------Current Top Athletes - Development------------------------------------------------------------
 
 if selected == "Current Top Athletes - Development":
-    st.markdown("<h1 style='text-align:center;font-size:48px;'>Draft - WIP!</h1>", unsafe_allow_html=True)
     st.markdown("<h3><span style='color:blue;'>TopX</span><span style='color:#4a0a13;'> vs Swiss</span></h3>", unsafe_allow_html=True)
   
     col1, col2, col3 = st.columns(3)
