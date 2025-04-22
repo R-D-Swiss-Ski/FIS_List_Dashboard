@@ -592,37 +592,45 @@ if selected == "Year of birth Development over Seasons":
         df['season'] = "S" + df['season'].astype(str) + " BY" + df[birthyear_col].astype(str)
         return df
     
+    
     # Plotting
     fig, ax = plt.subplots(2, 2, figsize=(24, 12), dpi=300)  # Set dpi to 300 for higher resolution
     fig.subplots_adjust(hspace=0.4)  # Add space between rows
-    col1, col2 = st.columns(2)
-    col3, col4 = st.columns(2)
-    
+
     disciplines = ['DH', 'SG', 'SL', 'GS']
     
     for i, disciplin in enumerate(disciplines):
         df_results_top = collect_data_Entw(birthyear, FISYear, Gender, top, disciplin, combined_df)
         df_results_top = format_season_column(df_results_top)
+        # Create positional indices for categorical x-values
+        positions = list(range(len(df_results_top)))
         
         row = i // 2
         col = i % 2
         
-        ax[row, col].plot(df_results_top['season'], df_results_top['meanint'], label='Int', marker='o', color= '#0328fc')
-        ax[row, col].plot(df_results_top['season'], df_results_top['meansui'], label='SUI', marker='o', color= '#4a0a13')
+        ax[row, col].plot(positions, df_results_top['meanint'], label='Int', marker='o', color='#0328fc')
+        ax[row, col].plot(positions, df_results_top['meansui'], label='SUI', marker='o', color='#4a0a13')
         ax[row, col].set_title('Top ' + str(top) + ' ' + str(disciplin))
         ax[row, col].invert_yaxis()
         ax[row, col].set_xlabel('Season')
         ax[row, col].set_ylabel('Weltranglistenposition')
         ax[row, col].legend()
         ax[row, col].grid(True)
-        ax[row, col].set_xticks(df_results_top['season'])  # Add tick for every year
+        ax[row, col].set_xticks(positions)  # Add tick for every season
         ax[row, col].set_xticklabels(df_results_top['season'], rotation=45)
-
-        # Add value labels
-        for i, txt in enumerate(df_results_top['meanint']):
-            ax[row, col].annotate(f'{txt:.2f}', (df_results_top['season'][i], df_results_top['meanint'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#0328fc')
-        for i, txt in enumerate(df_results_top['meansui']):
-            ax[row, col].annotate(f'{txt:.2f}', (df_results_top['season'][i], df_results_top['meansui'][i]), textcoords="offset points", xytext=(0,10), ha='center', color='#4a0a13')
+        
+        # Set x-axis maximum to the season that contains "S24/25"
+        if df_results_top['season'].str.contains("S24/25").any():
+            max_index = df_results_top.index[df_results_top['season'].str.contains("S24/25")][0]
+            ax[row, col].set_xlim(-0.5, max_index + 0.5)
+        
+        # Add value labels on the points using positions
+        for j, txt in enumerate(df_results_top['meanint']):
+            ax[row, col].annotate(f'{txt:.2f}', (positions[j], df_results_top['meanint'].iloc[j]),
+                                   textcoords="offset points", xytext=(0,10), ha='center', color='#0328fc')
+        for j, txt in enumerate(df_results_top['meansui']):
+            ax[row, col].annotate(f'{txt:.2f}', (positions[j], df_results_top['meansui'].iloc[j]),
+                                   textcoords="offset points", xytext=(0,10), ha='center', color='#4a0a13')
     
     st.pyplot(fig)
 
