@@ -403,7 +403,7 @@ if selected == "Year of birth and Season #":
     col1, col2 = st.columns(2)
 
     with col1:
-        st.dataframe(df_results_top.style.format(precision=0))
+        st.table(df_results_top.style.format(precision=0))
 
     with col2:
        
