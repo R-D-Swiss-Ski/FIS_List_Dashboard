@@ -19,7 +19,7 @@ st.set_page_config(
 ### PAGE CONTENT ###
 
 st.title("FIS Points List Dashboard")
-st.header("FIS Pointlist 15.4.2025")
+st.header("FIS Pointlist 1.5.2025")
 
 selected = option_menu(
             None, [ "Top 3", "Top 20", "Year of birth and Season #", "Year of birth over seasons", "Year of birth Development over Seasons", "Current Top Athletes - Development", "Athlete - All Disciplines - Development"],
@@ -34,8 +34,8 @@ selected = option_menu(
 
 
 ### PATHS ###
-path_latest_fis_list_combinded = "data/fis_list_combined_15_04_25.pkl"
-path_latest_fis_list = "data/FIS-points-list-AL-2025-412.csv"
+path_latest_fis_list_combinded = "data/fis_list_combined_1_05_25.pkl"
+path_latest_fis_list = "data/FIS-points-list-AL-2025-413.csv"
 
 ### HELPER FUNCTIONS ###
 @st.cache_data(show_spinner=False)
