@@ -59,23 +59,19 @@ def highlight_suiss(val):
         return 'background-color: rgba(0, 102, 255, 0.8)'
     return ''
 
-
-def formated_dataframe(df,n):
+def formated_dataframe(df, n):
     height = 750 if n == 20 else None
     df_formated = st.dataframe(
         df,
-        hide_index=True,
         use_container_width=True,
         height=height,
         column_config={
             "Name": st.column_config.Column(width=150)
         }
     )
-
     return df_formated
 
 def create_table(data, discipline, n=3, style=False):
-
     pos = discipline + "pos"
     points = discipline + "points"
 
@@ -88,10 +84,16 @@ def create_table(data, discipline, n=3, style=False):
         "competitorname": "Name",
         "nationcode": "Nat",
         points: "Best",
-        pos: "Rank" 
+        pos: "Rank"
     })[["Name", "Nat", "Best", "Rank"]]
 
-    if style: 
+    # Reset the 
+    df_topX_display.reset_index(drop=True, inplace=True)
+    df_topX_display.index += 1  # Start index at 1
+
+
+
+    if style:
         styled_df = (df_topX_display.style
                     .map(highlight_suiss, subset=['Nat'])
                     .format({
@@ -99,11 +101,10 @@ def create_table(data, discipline, n=3, style=False):
                         "Best": "{:.2f}"    # Two decimal places
                     })
                 )
-        
-        return formated_dataframe(styled_df,n)
+        return formated_dataframe(styled_df, n)
 
     # Display the table in Streamlit
-    return formated_dataframe(df_topX_display,n)
+    return formated_dataframe(df_topX_display, n)
 
 
 def plot_fisyear_data(fig, df_grouped, comp_data, competitor_name, col_name, disciplin, use_log_scale):
@@ -362,7 +363,7 @@ if selected == "Top X":
         create_table(SUI_data, "sg", 5)
 
     with col2_4:
-        st.subheader("Downhill")
+        st.subheader("Downhill SUI")
         create_table(SUI_data, "dh", 5)
 
 
