@@ -246,7 +246,7 @@ if selected == "Top 3":
                                     "Birthyear",
                                     birthyear_options,
                                     key="by2",
-                                    index=0,
+                                    index=birthyear_options.index(1997) if 1997 in birthyear_options else 0
                                 )
     
     with col4_2:
