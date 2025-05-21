@@ -22,7 +22,7 @@ st.title("FIS Points List Dashboard")
 st.header("FIS Pointlist 1.5.2025")
 
 selected = option_menu(
-            None, [ "Top 3", "Top 20", "Year of birth and Season #", "Year of birth over seasons", "Year of birth Development over Seasons", "Current Top Athletes - Development", "Athlete - All Disciplines - Development"],
+            None, [ "Top 3", "Top X", "Year of birth and Season #", "Year of birth over seasons", "Year of birth Development over Seasons", "Current Top Athletes - Development", "Athlete - All Disciplines - Development"],
             icons=["trophy-fill", "trophy","clipboard2-pulse-fill", "receipt","rocket","speedometer2"],
             orientation= "horizontal",
             styles={
@@ -31,7 +31,6 @@ selected = option_menu(
                 "nav-link": {"font-size": "22px", "text-align": "center", "margin":"0px",  "--hover-color": "#d6d6d6"},
                 "nav-link-selected": {"background-color": "rgba(0, 104, 201, 0.5)", "font-weight": "normal", "color": "white"},
             })
-
 
 ### PATHS ###
 path_latest_fis_list_combinded = "data/fis_list_combined_1_05_25.pkl"
@@ -187,10 +186,10 @@ if selected == "Top 3":
 
     with col1:
         option_birthyear = st.selectbox(
-                                    "Birthyear",
-                                    birthyear_options,
-                                    index=0
-                                )
+            "Birthyear",
+            birthyear_options,
+            index=birthyear_options.index(1997) if 1997 in birthyear_options else 0
+        )
     
     with col2:
         option_gender = st.selectbox(
@@ -247,7 +246,7 @@ if selected == "Top 3":
                                     "Birthyear",
                                     birthyear_options,
                                     key="by2",
-                                    index=0
+                                    index=0,
                                 )
     
     with col4_2:
@@ -299,21 +298,21 @@ if selected == "Top 3":
         create_table(SUI_data2, "dh")
 
 
-#------------------------------------------------------------TOP 20------------------------------------------------------------
-if selected == "Top 20":
+#------------------------------------------------------------TOP X------------------------------------------------------------
+if selected == "Top X":
     data = get_latest_fis_list()
 
     # Sort the data so the most recent year is at index 0 
     birthyear_options = data["birthyear"].unique().tolist()
     birthyear_options.sort(reverse=True)
 
-    col1, col2, col3 = st.columns([1,1,2])
+    col1, col2, col3 = st.columns([1,2,3])
 
     with col1:
         option_birthyear = st.selectbox(
                                     "Birthyear",
                                     birthyear_options,
-                                    index=0
+                                    index=birthyear_options.index(1997) if 1997 in birthyear_options else 0
                                 )
     
     with col2:
@@ -322,6 +321,9 @@ if selected == "Top 20":
                                     ["M", "W"],
                                     index=0
                                 )
+    with col3:
+        top = st.number_input("Select Top X:", value=20, min_value=3, max_value=300)
+        
         
     filtered_data = data[(data["birthyear"] == option_birthyear) & (data["gender"] == option_gender)]
 
@@ -329,19 +331,19 @@ if selected == "Top 20":
 
     with col1_1:
         st.subheader("Slalom")
-        create_table(filtered_data, "sl", 20, True)
+        create_table(filtered_data, "sl", top, True)
 
     with col1_2:
         st.subheader("Giant Slalom")
-        create_table(filtered_data, "gs", 20, True)
+        create_table(filtered_data, "gs", top, True)
 
     with col1_3:
         st.subheader("Super G")
-        create_table(filtered_data, "sg", 20, True)
+        create_table(filtered_data, "sg", top, True)
 
     with col1_4:
         st.subheader("Downhill")
-        create_table(filtered_data, "dh", 20, True)
+        create_table(filtered_data, "dh", top, True)
 
 
     col2_1, col2_2, col2_3, col2_4 = st.columns([1,1,1,1])
