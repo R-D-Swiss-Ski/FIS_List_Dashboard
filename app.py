@@ -310,23 +310,38 @@ if selected == "Top X":
     col1, col2, col3 = st.columns([1,2,3])
 
     with col1:
-        option_birthyear = st.selectbox(
-                                    "Birthyear",
-                                    birthyear_options,
-                                    index=birthyear_options.index(1997) if 1997 in birthyear_options else 0
-                                )
-    
+        birthyear_min = min(birthyear_options)
+        birthyear_max = max(birthyear_options)
+        birthyear_from = st.selectbox(
+            "Birthyear from",
+            birthyear_options,
+            index=birthyear_options.index(1997) if 1997 in birthyear_options else 0,
+            key="birthyear_from"
+        )
+        birthyear_to = st.selectbox(
+            "Birthyear to",
+            birthyear_options,
+            index=0,
+            key="birthyear_to"
+        )
+
     with col2:
         option_gender = st.selectbox(
-                                    "Gender",
-                                    ["M", "W"],
-                                    index=0
-                                )
+            "Gender",
+            ["M", "W"],
+            index=0
+        )
     with col3:
         top = st.number_input("Select Top X:", value=20, min_value=3, max_value=300)
-        
-        
-    filtered_data = data[(data["birthyear"] == option_birthyear) & (data["gender"] == option_gender)]
+
+    # Ensure correct order for filtering
+    by_from = min(birthyear_from, birthyear_to)
+    by_to = max(birthyear_from, birthyear_to)
+    filtered_data = data[
+        (data["birthyear"] >= by_from) &
+        (data["birthyear"] <= by_to) &
+        (data["gender"] == option_gender)
+    ]
 
     col1_1, col1_2, col1_3, col1_4 = st.columns([1,1,1,1])
 
