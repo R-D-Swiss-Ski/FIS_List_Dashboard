@@ -33,8 +33,8 @@ selected = option_menu(
             })
 
 ### PATHS ###
-path_latest_fis_list_combinded = "data/fis_list_combined_1_05_25.pkl"
-path_latest_fis_list = "data/FIS-points-list-AL-2025-413.csv"
+path_latest_fis_list_combinded = "FIS_List_Dashboard/data/fis_list_combined_1_05_25.pkl"
+path_latest_fis_list = "FIS_List_Dashboard/data/FIS-points-list-AL-2025-413.csv"
 
 ### HELPER FUNCTIONS ###
 @st.cache_data(show_spinner=False)
